@@ -117,4 +117,39 @@ class ApiClient {
       queryParameters: {'actorId': actorId},
     );
   }
+
+  // =============== ACTIVITIES ===============
+
+  Future<List<Map<String, dynamic>>> fetchActivitiesForAgent(
+    String agentId,
+  ) async {
+    final res = await dio.get(
+      '/activities',
+      queryParameters: {
+        'agentId': agentId,
+        'page': 0,
+        'size': 100,
+      },
+    );
+    final data = res.data as Map<String, dynamic>;
+    final content = data['content'] as List<dynamic>? ?? [];
+    return content.cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> createActivity(Map<String, dynamic> payload) async {
+    final res = await dio.post('/activities', data: payload);
+    return res.data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> updateActivity(
+    String id,
+    Map<String, dynamic> payload,
+  ) async {
+    final res = await dio.put('/activities/$id', data: payload);
+    return res.data as Map<String, dynamic>;
+  }
+
+  Future<void> deleteActivity(String id) async {
+    await dio.delete('/activities/$id');
+  }
 }

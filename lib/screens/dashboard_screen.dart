@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/session_provider.dart';
 import '../services/location_sender.dart';
+import 'activity_log_screen.dart';
 import 'live_location_screen.dart';
 import 'leads_screen.dart';
 import 'invoices_list_screen.dart';
@@ -92,6 +93,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               title: const Text('Dashboard'),
               onTap: () {
                 Navigator.of(context).pop();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.event_note_outlined),
+              title: const Text('Activity Log'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ActivityLogScreen(),
+                  ),
+                );
               },
             ),
             ListTile(

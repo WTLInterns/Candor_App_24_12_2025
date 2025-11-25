@@ -1,8 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../providers/session_provider.dart';
 import '../services/api_client.dart';
-import 'package:provider/provider.dart';
 
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({super.key});
@@ -13,7 +15,6 @@ class LeadsScreen extends StatefulWidget {
 
 class _LeadsScreenState extends State<LeadsScreen> {
   bool _loading = false;
-  String? _error;
   List<Map<String, dynamic>> _leads = [];
   String _search = '';
   String _statusFilter = 'ALL';
@@ -27,7 +28,6 @@ class _LeadsScreenState extends State<LeadsScreen> {
   Future<void> _loadLeads() async {
     setState(() {
       _loading = true;
-      _error = null;
     });
     try {
       final session = context.read<SessionProvider>();
@@ -37,8 +37,10 @@ class _LeadsScreenState extends State<LeadsScreen> {
         _leads = leads;
       });
     } catch (e) {
+      // On error, keep leads empty and allow pull-to-refresh; UI will show the
+      // calm empty state message instead of a red error.
       setState(() {
-        _error = 'Failed to load leads';
+        _leads = [];
       });
     } finally {
       if (mounted) {
@@ -54,18 +56,30 @@ class _LeadsScreenState extends State<LeadsScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+        return GestureDetector(
+          // Tap outside to close
+          onTap: () => Navigator.of(ctx).maybePop(),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              color: Colors.black.withOpacity(0.25),
+              child: GestureDetector(
+                onTap: () {}, // allow taps inside sheet
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: 12,
+                      right: 12,
+                      bottom: MediaQuery.of(ctx).viewInsets.bottom + 8,
+                    ),
+                    child: _LeadForm(existing: existing),
+                  ),
+                ),
+              ),
+            ),
           ),
-          child: _LeadForm(existing: existing),
         );
       },
     );
@@ -107,14 +121,6 @@ class _LeadsScreenState extends State<LeadsScreen> {
         onRefresh: _loadLeads,
         child: Column(
           children: [
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: Colors.redAccent),
-                ),
-              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
               child: Column(
@@ -548,6 +554,11 @@ class _LeadFormState extends State<_LeadForm> {
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.of(context).maybePop(),
                   ),
                 ],
               ),
