@@ -127,88 +127,123 @@ class _InvoiceReviewScreenState extends State<InvoiceReviewScreen> {
     final d = widget.draft;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text('Review Invoice'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Customer',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(d.customerName.isEmpty ? '-' : d.customerName,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Text(d.customerPhone.isEmpty ? '-' : d.customerPhone),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Items',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              child: Column(
-                children: [
-                  const ListTile(
-                    title: Text('Products'),
-                  ),
-                  ...d.items.map(
-                    (i) => ListTile(
-                      title: Text(i.name),
-                      subtitle: Text(
-                          'Qty: ${i.quantity} • ₹${i.unitPrice.toStringAsFixed(2)} • Disc: ${i.discountPct.toStringAsFixed(1)}% • Tax: ${i.taxPct.toStringAsFixed(1)}%'),
-                      trailing: Text('₹${i.lineTotal.toStringAsFixed(2)}'),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0A66C2), Color(0xFF4FA0FF), Color(0xFFE6F3FF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 520),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 12),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _summaryRow('Subtotal', d.subtotal),
-                    _summaryRow('Discount', d.totalDiscount),
-                    _summaryRow('Tax', d.taxAmount),
-                    _summaryRow('Shipping', d.shipping),
-                    const Divider(),
-                    _summaryRow('Total', d.total, isBold: true),
+                    const Text(
+                      'Customer',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(d.customerName.isEmpty ? '-' : d.customerName,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text(d.customerPhone.isEmpty ? '-' : d.customerPhone),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Items',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    Card(
+                      child: Column(
+                        children: [
+                          const ListTile(
+                            title: Text('Products'),
+                          ),
+                          ...d.items.map(
+                            (i) => ListTile(
+                              title: Text(i.name),
+                              subtitle: Text(
+                                  'Qty: ${i.quantity} • ₹${i.unitPrice.toStringAsFixed(2)} • Disc: ${i.discountPct.toStringAsFixed(1)}% • Tax: ${i.taxPct.toStringAsFixed(1)}%'),
+                              trailing:
+                                  Text('₹${i.lineTotal.toStringAsFixed(2)}'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _summaryRow('Subtotal', d.subtotal),
+                            _summaryRow('Discount', d.totalDiscount),
+                            _summaryRow('Tax', d.taxAmount),
+                            _summaryRow('Shipping', d.shipping),
+                            const Divider(),
+                            _summaryRow('Total', d.total, isBold: true),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saving ? null : _confirmAndSave,
+                        child: _saving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Text('Confirm & Save Invoice'),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _saving ? null : _confirmAndSave,
-                child: _saving
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Confirm & Save Invoice'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

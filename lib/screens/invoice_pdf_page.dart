@@ -1181,7 +1181,7 @@ class _InvoicePageState extends State<InvoicePage> {
   Future<void> _uploadPdf(String invoiceId, Uint8List data,
       {required String fileName}) async {
     final uri = Uri.parse(
-      'http://192.168.1.100:8080/api/v1/invoices/$invoiceId/pdf',
+      'http://192.168.1.101:8080/api/v1/invoices/$invoiceId/pdf',
     );
 
     final request = http.MultipartRequest('POST', uri);

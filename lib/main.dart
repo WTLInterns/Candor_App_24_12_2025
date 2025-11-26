@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'providers/session_provider.dart';
 import 'services/session_service.dart';
 import 'screens/login_screen.dart';
-import 'screens/dashboard_screen.dart';
+import 'screens/main_shell.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -128,9 +128,8 @@ class FieldForceProApp extends StatelessWidget {
             title: 'FieldForcePro Tracker',
             debugShowCheckedModeBanner: false,
             theme: theme,
-            home: session.isLoggedIn
-                ? const DashboardScreen()
-                : const LoginScreen(),
+            home:
+                session.isLoggedIn ? const MainShell() : const LoginScreen(),
           );
         },
       ),

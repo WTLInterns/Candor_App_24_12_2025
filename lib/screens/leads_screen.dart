@@ -58,23 +58,29 @@ class _LeadsScreenState extends State<LeadsScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return GestureDetector(
-          // Tap outside to close
+          // Tap outside glass card to close
           onTap: () => Navigator.of(ctx).maybePop(),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
             child: Container(
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withOpacity(0.35),
               child: GestureDetector(
-                onTap: () {}, // allow taps inside sheet
-                child: Align(
-                  alignment: Alignment.bottomCenter,
+                onTap: () {}, // allow taps inside card
+                child: Center(
                   child: Padding(
                     padding: EdgeInsets.only(
-                      left: 12,
-                      right: 12,
-                      bottom: MediaQuery.of(ctx).viewInsets.bottom + 8,
+                      left: 16,
+                      right: 16,
+                      top: 24,
+                      bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
                     ),
-                    child: _LeadForm(existing: existing),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: 520,
+                        maxHeight: MediaQuery.of(ctx).size.height * 0.9,
+                      ),
+                      child: const _LeadFormWrapper(),
+                    ),
                   ),
                 ),
               ),
@@ -114,109 +120,139 @@ class _LeadsScreenState extends State<LeadsScreen> {
     }).toList();
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: const Text('Leads'),
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadLeads,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search by customer or product',
-                      prefixIcon: const Icon(Icons.search),
-                      isDense: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0A66C2), Color(0xFF4FA0FF), Color(0xFFE6F3FF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: _loadLeads,
+            child: Center(
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white.withOpacity(0.4)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.18),
+                        blurRadius: 24,
+                        offset: const Offset(0, 12),
                       ),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _search = value.trim();
-                      });
-                    },
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 32,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        _StatusChip(
-                          label: 'All',
-                          code: 'ALL',
-                          activeCode: _statusFilter,
-                          onSelected: (code) {
-                            setState(() => _statusFilter = code);
-                          },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Search by customer or product',
+                          prefixIcon: const Icon(Icons.search),
+                          filled: true,
+                          fillColor: Colors.white,
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
-                        _StatusChip(
-                          label: 'New',
-                          code: 'NEW',
-                          activeCode: _statusFilter,
-                          onSelected: (code) {
-                            setState(() => _statusFilter = code);
-                          },
+                        onChanged: (value) {
+                          setState(() {
+                            _search = value.trim();
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 32,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            _StatusChip(
+                              label: 'All',
+                              code: 'ALL',
+                              activeCode: _statusFilter,
+                              onSelected: (code) {
+                                setState(() => _statusFilter = code);
+                              },
+                            ),
+                            _StatusChip(
+                              label: 'New',
+                              code: 'NEW',
+                              activeCode: _statusFilter,
+                              onSelected: (code) {
+                                setState(() => _statusFilter = code);
+                              },
+                            ),
+                            _StatusChip(
+                              label: 'In Progress',
+                              code: 'IN_PROGRESS',
+                              activeCode: _statusFilter,
+                              onSelected: (code) {
+                                setState(() => _statusFilter = code);
+                              },
+                            ),
+                            _StatusChip(
+                              label: 'Proposal',
+                              code: 'PROPOSAL',
+                              activeCode: _statusFilter,
+                              onSelected: (code) {
+                                setState(() => _statusFilter = code);
+                              },
+                            ),
+                            _StatusChip(
+                              label: 'Won',
+                              code: 'CLOSED_WON',
+                              activeCode: _statusFilter,
+                              onSelected: (code) {
+                                setState(() => _statusFilter = code);
+                              },
+                            ),
+                            _StatusChip(
+                              label: 'Lost',
+                              code: 'CLOSED_LOST',
+                              activeCode: _statusFilter,
+                              onSelected: (code) {
+                                setState(() => _statusFilter = code);
+                              },
+                            ),
+                          ],
                         ),
-                        _StatusChip(
-                          label: 'In Progress',
-                          code: 'IN_PROGRESS',
-                          activeCode: _statusFilter,
-                          onSelected: (code) {
-                            setState(() => _statusFilter = code);
-                          },
-                        ),
-                        _StatusChip(
-                          label: 'Proposal',
-                          code: 'PROPOSAL',
-                          activeCode: _statusFilter,
-                          onSelected: (code) {
-                            setState(() => _statusFilter = code);
-                          },
-                        ),
-                        _StatusChip(
-                          label: 'Won',
-                          code: 'CLOSED_WON',
-                          activeCode: _statusFilter,
-                          onSelected: (code) {
-                            setState(() => _statusFilter = code);
-                          },
-                        ),
-                        _StatusChip(
-                          label: 'Lost',
-                          code: 'CLOSED_LOST',
-                          activeCode: _statusFilter,
-                          onSelected: (code) {
-                            setState(() => _statusFilter = code);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: _loading && _leads.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : visibleLeads.isEmpty
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24),
+                      ),
+                      const SizedBox(height: 12),
+                      if (_loading && _leads.isEmpty)
+                        const Center(child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: CircularProgressIndicator(),
+                        ))
+                      else if (visibleLeads.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Center(
                             child: Text(
                               'No leads found. Please add a lead.',
                               textAlign: TextAlign.center,
                             ),
                           ),
                         )
-                      : ListView.separated(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(12),
+                      else
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
                           itemCount: visibleLeads.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 12),
                           itemBuilder: (context, index) {
@@ -328,7 +364,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                           decoration: BoxDecoration(
                                             color: statusColor.withOpacity(0.16),
                                             borderRadius: BorderRadius.circular(999),
-                                            border: Border.all(color: statusColor.withOpacity(0.6)),
+                                            border: Border.all(
+                                              color: statusColor.withOpacity(0.6),
+                                            ),
                                           ),
                                           child: Text(
                                             status,
@@ -350,7 +388,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                             IconButton(
                                               icon: const Icon(Icons.delete_outline, size: 18),
                                               tooltip: 'Delete',
-                                              onPressed: () => _deleteLead(lead['id'] as String),
+                                              onPressed: () =>
+                                                  _deleteLead(lead['id'] as String),
                                             ),
                                           ],
                                         ),
@@ -362,8 +401,12 @@ class _LeadsScreenState extends State<LeadsScreen> {
                             );
                           },
                         ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-          ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -525,198 +568,214 @@ class _LeadFormState extends State<_LeadForm> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SingleChildScrollView(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.96),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 32,
-              offset: const Offset(0, -18),
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.existing == null ? 'Add Lead' : 'Edit Lead',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: 'Close',
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextFormField(
+            controller: _customerCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Customer Name',
+              prefixIcon: Icon(Icons.person_outline),
+            ),
+            validator: (v) => (v == null || v.trim().isEmpty)
+                ? 'Customer name is required'
+                : null,
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _phoneCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Phone',
+              prefixIcon: Icon(Icons.phone_outlined),
+            ),
+            keyboardType: TextInputType.phone,
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _addressCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Address',
+              prefixIcon: Icon(Icons.location_on_outlined),
+            ),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<Map<String, dynamic>>(
+            value: _selectedProduct != null && _selectedProduct!.isNotEmpty
+                ? _selectedProduct
+                : null,
+            decoration: const InputDecoration(
+              labelText: 'Product',
+              prefixIcon: Icon(Icons.shopping_bag_outlined),
+            ),
+            isExpanded: true,
+            items: _products
+                .map(
+                  (p) => DropdownMenuItem<Map<String, dynamic>>(
+                    value: p,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            p['name']?.toString() ?? '-',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (p['price'] != null) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            '₹${p['price'].toString()}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black54,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                _selectedProduct = value;
+              });
+            },
+          ),
+          if (_selectedProduct != null &&
+              (_selectedProduct!['description'] != null &&
+                  _selectedProduct!['description']
+                      .toString()
+                      .isNotEmpty)) ...[
+            const SizedBox(height: 6),
+            Text(
+              _selectedProduct!['description'].toString(),
+              style: const TextStyle(fontSize: 12, color: Colors.black54),
             ),
           ],
-        ),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+          const SizedBox(height: 12),
+          Row(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    widget.existing == null ? 'Add Lead' : 'Edit Lead',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+              Expanded(
+                child: TextFormField(
+                  controller: _quantityCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Quantity',
+                    prefixIcon: Icon(Icons.format_list_numbered),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    tooltip: 'Close',
-                    onPressed: () => Navigator.of(context).maybePop(),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _customerCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Customer Name',
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Customer name is required'
-                    : null,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _phoneCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  prefixIcon: Icon(Icons.phone_outlined),
-                ),
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _addressCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Address',
-                  prefixIcon: Icon(Icons.location_on_outlined),
+                  keyboardType: TextInputType.number,
                 ),
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<Map<String, dynamic>>(
-                value: _selectedProduct != null && _selectedProduct!.isNotEmpty
-                    ? _selectedProduct
-                    : null,
-                decoration: const InputDecoration(
-                  labelText: 'Product',
-                  prefixIcon: Icon(Icons.shopping_bag_outlined),
-                ),
-                isExpanded: true,
-                items: _products
-                    .map(
-                      (p) => DropdownMenuItem<Map<String, dynamic>>(
-                        value: p,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              p['name']?.toString() ?? '-',
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (p['price'] != null)
-                              Text(
-                                '₹${p['price'].toString()}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white70,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                          ],
-                        ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedProduct = value;
-                  });
-                },
-              ),
-              if (_selectedProduct != null &&
-                  (_selectedProduct!['description'] != null &&
-                      _selectedProduct!['description']
-                          .toString()
-                          .isNotEmpty)) ...[
-                const SizedBox(height: 6),
-                Text(
-                  _selectedProduct!['description'].toString(),
-                  style: const TextStyle(fontSize: 12, color: Colors.white70),
-                ),
-              ],
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _quantityCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Quantity',
-                        prefixIcon: Icon(Icons.format_list_numbered),
-                      ),
-                      keyboardType: TextInputType.number,
-                    ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _status,
+                  decoration: const InputDecoration(
+                    labelText: 'Status',
+                    prefixIcon: Icon(Icons.flag_outlined),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: _status,
-                      decoration: const InputDecoration(
-                        labelText: 'Status',
-                        prefixIcon: Icon(Icons.flag_outlined),
-                      ),
-                      isExpanded: true,
-                      items: const [
-                        DropdownMenuItem(value: 'NEW', child: Text('NEW')),
-                        DropdownMenuItem(
-                            value: 'CONTACTED', child: Text('CONTACTED')),
-                        DropdownMenuItem(
-                            value: 'QUALIFIED', child: Text('QUALIFIED')),
-                        DropdownMenuItem(
-                            value: 'PROPOSAL', child: Text('PROPOSAL')),
-                        DropdownMenuItem(
-                            value: 'CLOSED_WON', child: Text('CLOSED_WON')),
-                        DropdownMenuItem(
-                            value: 'CLOSED_LOST', child: Text('CLOSED_LOST')),
-                      ],
-                      onChanged: (v) {
-                        if (v == null) return;
-                        setState(() {
-                          _status = v;
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: DecoratedBox(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF0052CC), Color(0xFF2563EB)],
-                    ),
-                    borderRadius: BorderRadius.all(Radius.circular(999)),
-                  ),
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      shape: const StadiumBorder(),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                    onPressed: _saving ? null : _save,
-                    child: _saving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Save Lead'),
-                  ),
+                  isExpanded: true,
+                  items: const [
+                    DropdownMenuItem(value: 'NEW', child: Text('NEW')),
+                    DropdownMenuItem(
+                        value: 'CONTACTED', child: Text('CONTACTED')),
+                    DropdownMenuItem(
+                        value: 'QUALIFIED', child: Text('QUALIFIED')),
+                    DropdownMenuItem(
+                        value: 'PROPOSAL', child: Text('PROPOSAL')),
+                    DropdownMenuItem(
+                        value: 'CLOSED_WON', child: Text('CLOSED_WON')),
+                    DropdownMenuItem(
+                        value: 'CLOSED_LOST', child: Text('CLOSED_LOST')),
+                  ],
+                  onChanged: (v) {
+                    if (v == null) return;
+                    setState(() {
+                      _status = v;
+                    });
+                  },
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF0052CC), Color(0xFF2563EB)],
+                ),
+                borderRadius: BorderRadius.all(Radius.circular(999)),
+              ),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: const StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+                onPressed: _saving ? null : _save,
+                child: _saving
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Save Lead'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeadFormWrapper extends StatelessWidget {
+  const _LeadFormWrapper();
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.96),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.18),
+                blurRadius: 32,
+                offset: const Offset(0, 18),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: _LeadForm(),
           ),
         ),
       ),
