@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:geolocator/geolocator.dart';
 
@@ -27,11 +28,28 @@ class LocationSender {
     await Geolocator.getCurrentPosition();
 
     _sub?.cancel();
-    _sub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
+
+    LocationSettings locationSettings;
+    if (Platform.isAndroid) {
+      locationSettings = AndroidSettings(
         accuracy: LocationAccuracy.high,
         distanceFilter: 5,
-      ),
+        intervalDuration: const Duration(seconds: 10),
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: 'Field tracking active',
+          notificationText: 'Your live location is being shared with the office.',
+          enableWakeLock: true,
+        ),
+      );
+    } else {
+      locationSettings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      );
+    }
+
+    _sub = Geolocator.getPositionStream(
+      locationSettings: locationSettings,
     ).listen((pos) async {
       try {
         onUpdate?.call(pos);
