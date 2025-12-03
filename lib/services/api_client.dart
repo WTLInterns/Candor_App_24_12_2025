@@ -105,11 +105,15 @@ class ApiClient {
     required String agentName,
     required File imageFile,
     String workType = 'FIELD',
+    double? latitude,
+    double? longitude,
   }) async {
     final formData = FormData.fromMap({
       'agentId': agentId,
       'agentName': agentName,
       'workType': workType,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
       'image': await MultipartFile.fromFile(
         imageFile.path,
         filename: path.basename(imageFile.path),

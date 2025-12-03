@@ -138,6 +138,8 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
         agentId: agentId,
         agentName: agentName,
         imageFile: _photoFile!,
+        latitude: _latitude,
+        longitude: _longitude,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

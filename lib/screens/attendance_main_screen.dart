@@ -33,8 +33,9 @@ class _AttendanceMainScreenState extends State<AttendanceMainScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Attendance'),
-        bottom: const TabBar(
-          tabs: [
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
             Tab(text: 'Form'),
             Tab(text: 'Records'),
           ],
