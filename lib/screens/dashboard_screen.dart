@@ -7,10 +7,9 @@ import 'package:provider/provider.dart';
 import '../providers/session_provider.dart';
 import '../services/location_sender.dart';
 import 'activity_log_screen.dart';
+import 'attendance_work_field_screen.dart';
 import 'live_location_screen.dart';
 import 'leads_screen.dart';
-import 'invoices_list_screen.dart';
-import 'invoice_pdf_page.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -274,44 +273,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _QuickActionButton(
-                            icon: Icons.receipt_long_outlined,
-                            label: 'Invoices',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const InvoicesScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _QuickActionButton(
                             icon: Icons.event_note_outlined,
                             label: 'Activity log',
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) => const ActivityLogScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _QuickActionButton(
-                            icon: Icons.picture_as_pdf_outlined,
-                            label: 'Create invoice',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const InvoicePage(),
                                 ),
                               );
                             },

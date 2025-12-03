@@ -5,6 +5,39 @@ import 'package:provider/provider.dart';
 
 import '../providers/session_provider.dart';
 import '../services/api_client.dart';
+import 'lead_chat_screen.dart';
+
+class Lead {
+  final String? id;
+  final String companyName;
+  final String phone;
+  final String email;
+  final String address;
+  final String product;
+  final int quantity;
+  final double amount;
+  final String status;
+  final String? assignedAgentId;
+  final String? source;
+  final String? notes;
+  final DateTime createdAt;
+
+  Lead({
+    this.id,
+    required this.companyName,
+    required this.phone,
+    required this.email,
+    required this.address,
+    required this.product,
+    required this.quantity,
+    required this.amount,
+    required this.status,
+    this.assignedAgentId,
+    this.source,
+    this.notes,
+    required this.createdAt,
+  });
+}
 
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({super.key});
@@ -79,7 +112,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         maxWidth: 520,
                         maxHeight: MediaQuery.of(ctx).size.height * 0.9,
                       ),
-                      child: const _LeadFormWrapper(),
+                      child: _LeadFormWrapper(existing: existing),
                     ),
                   ),
                 ),
@@ -92,6 +125,57 @@ class _LeadsScreenState extends State<LeadsScreen> {
     if (result == true) {
       _loadLeads();
     }
+  }
+
+  Future<void> _openChat(Map<String, dynamic> lead) async {
+    final id = lead['id'] as String?;
+    if (id == null) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return GestureDetector(
+          onTap: () => Navigator.of(ctx).maybePop(),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: Container(
+              color: Colors.black.withOpacity(0.35),
+              child: GestureDetector(
+                onTap: () {},
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      top: 24,
+                      bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: 520,
+                        maxHeight: MediaQuery.of(ctx).size.height * 0.9,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Material(
+                          color: Colors.white,
+                          child: LeadChatScreen(
+                            leadId: id,
+                            title: lead['companyName']?.toString() ?? '-',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _deleteLead(String id) async {
@@ -381,6 +465,11 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
                                             IconButton(
+                                              icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                                              tooltip: 'Chat',
+                                              onPressed: () => _openChat(lead),
+                                            ),
+                                            IconButton(
                                               icon: const Icon(Icons.edit, size: 18),
                                               tooltip: 'Edit',
                                               onPressed: () => _openLeadForm(existing: lead),
@@ -468,6 +557,7 @@ class _LeadForm extends StatefulWidget {
 class _LeadFormState extends State<_LeadForm> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _customerCtrl;
+  late TextEditingController _emailCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _addressCtrl;
   late TextEditingController _quantityCtrl;
@@ -481,6 +571,7 @@ class _LeadFormState extends State<_LeadForm> {
     super.initState();
     final existing = widget.existing;
     _customerCtrl = TextEditingController(text: existing?['companyName'] ?? '');
+    _emailCtrl = TextEditingController(text: existing?['email'] ?? '');
     _phoneCtrl = TextEditingController(text: existing?['phone'] ?? '');
     _addressCtrl = TextEditingController(text: existing?['address'] ?? '');
     _quantityCtrl = TextEditingController(
@@ -494,6 +585,7 @@ class _LeadFormState extends State<_LeadForm> {
   @override
   void dispose() {
     _customerCtrl.dispose();
+    _emailCtrl.dispose();
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
     _quantityCtrl.dispose();
@@ -531,6 +623,7 @@ class _LeadFormState extends State<_LeadForm> {
       final agentId = session.agentId!;
       final payload = {
         'companyName': _customerCtrl.text.trim(),
+        'email': _emailCtrl.text.trim(),
         'phone': _phoneCtrl.text.trim(),
         'address': _addressCtrl.text.trim(),
         'product': _selectedProduct != null
@@ -539,6 +632,11 @@ class _LeadFormState extends State<_LeadForm> {
         'quantity': _quantityCtrl.text.trim().isEmpty
             ? null
             : int.tryParse(_quantityCtrl.text.trim()),
+        'amount': (_quantityCtrl.text.trim().isEmpty ||
+                _selectedProduct?['price'] == null)
+            ? null
+            : (int.tryParse(_quantityCtrl.text.trim()) ?? 0) *
+                (double.tryParse(_selectedProduct!['price'].toString()) ?? 0.0),
         'status': _status,
         'assignedAgentId': agentId,
       };
@@ -603,6 +701,15 @@ class _LeadFormState extends State<_LeadForm> {
           ),
           const SizedBox(height: 8),
           TextFormField(
+            controller: _emailCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Email',
+              prefixIcon: Icon(Icons.email_outlined),
+            ),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 8),
+          TextFormField(
             controller: _phoneCtrl,
             decoration: const InputDecoration(
               labelText: 'Phone',
@@ -634,6 +741,22 @@ class _LeadFormState extends State<_LeadForm> {
                     value: p,
                     child: Row(
                       children: [
+                        if (p['imageUrl'] != null &&
+                            (p['imageUrl'] as String).isNotEmpty) ...[
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              '${ApiClient().dio.options.baseUrl}${p['imageUrl']}',
+                              width: 28,
+                              height: 28,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.image_not_supported,
+                                      size: 20, color: Colors.grey),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         Expanded(
                           child: Text(
                             p['name']?.toString() ?? '-',
@@ -753,7 +876,8 @@ class _LeadFormState extends State<_LeadForm> {
 }
 
 class _LeadFormWrapper extends StatelessWidget {
-  const _LeadFormWrapper();
+  final Map<String, dynamic>? existing;
+  const _LeadFormWrapper({this.existing});
 
   @override
   Widget build(BuildContext context) {
@@ -775,7 +899,7 @@ class _LeadFormWrapper extends StatelessWidget {
           ),
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            child: _LeadForm(),
+            child: _LeadForm(existing: existing),
           ),
         ),
       ),

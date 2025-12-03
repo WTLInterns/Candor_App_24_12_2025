@@ -4,8 +4,8 @@ import '../providers/session_provider.dart';
 import 'package:provider/provider.dart';
 
 import 'dashboard_screen.dart';
+import 'attendance_main_screen.dart';
 import 'leads_screen.dart';
-import 'invoices_list_screen.dart';
 import 'live_location_screen.dart';
 
 class MainShell extends StatefulWidget {
@@ -25,8 +25,8 @@ class _MainShellState extends State<MainShell> {
     super.initState();
     _pages = const [
       DashboardScreen(),
+      AttendanceMainScreen(),
       LeadsScreen(),
-      InvoicesScreen(),
       LiveLocationScreen(),
       _ProfileScreen(),
     ];
@@ -75,14 +75,14 @@ class _MainShellState extends State<MainShell> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.assignment_turned_in_outlined),
+              activeIcon: Icon(Icons.assignment_turned_in),
+              label: 'Form',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.assignment_outlined),
               activeIcon: Icon(Icons.assignment_rounded),
               label: 'Leads',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long_outlined),
-              activeIcon: Icon(Icons.receipt_long_rounded),
-              label: 'Invoices',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.map_outlined),

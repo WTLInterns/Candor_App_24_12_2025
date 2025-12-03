@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:path/path.dart' as path;
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -9,7 +12,7 @@ class ApiClient {
   ApiClient._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'http://192.168.1.101:8080/api/v1',
+        baseUrl: 'http://192.168.1.100:8080/api/v1',
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
       ),
@@ -70,6 +73,97 @@ class ApiClient {
 
   Future<void> deleteLead(String id) async {
     await dio.delete('/leads/$id');
+  }
+
+  // =============== FIELD ATTENDANCE ===============
+
+  Future<void> submitFieldAttendance({
+    required String agentId,
+    required String agentName,
+    required File imageFile,
+    double? latitude,
+    double? longitude,
+  }) async {
+    final formData = FormData.fromMap({
+      'agentId': agentId,
+      'agentName': agentName,
+      'status': 'PRESENT',
+      'workType': 'FIELD',
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      'image': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: path.basename(imageFile.path),
+      ),
+    });
+
+    await dio.post('/attendance/field/checkin', data: formData);
+  }
+
+  Future<void> punchInAttendance({
+    required String agentId,
+    required String agentName,
+    required File imageFile,
+    String workType = 'FIELD',
+  }) async {
+    final formData = FormData.fromMap({
+      'agentId': agentId,
+      'agentName': agentName,
+      'workType': workType,
+      'image': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: path.basename(imageFile.path),
+      ),
+    });
+
+    await dio.post('/attendance/field/punch-in', data: formData);
+  }
+
+  Future<void> punchOutAttendance({
+    required String agentId,
+    required String agentName,
+  }) async {
+    await dio.post('/attendance/field/punch-out', data: {
+      'agentId': agentId,
+      'agentName': agentName,
+      'reason': null,
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> fetchMonthlyPunchRecords({
+    required String agentId,
+    required String yearMonth,
+  }) async {
+    final res = await dio.get('/attendance/field/records', queryParameters: {
+      'agentId': agentId,
+      'month': yearMonth,
+    });
+    final data = res.data as List<dynamic>? ?? [];
+    return data.cast<Map<String, dynamic>>();
+  }
+
+  // =============== LEAD COMMENTS / CHAT ===============
+
+  Future<List<Map<String, dynamic>>> fetchLeadComments(String leadId) async {
+    final res = await dio.get('/leads/$leadId/comments');
+    final data = res.data as List<dynamic>? ?? [];
+    return data.cast<Map<String, dynamic>>();
+  }
+
+  Future<Map<String, dynamic>> postLeadComment(
+    String leadId,
+    String message, {
+    String? agentName,
+  }) async {
+    final res = await dio.post(
+      '/leads/$leadId/comments',
+      data: {
+        'message': message,
+        'source': 'AGENT',
+        if (agentName != null && agentName.isNotEmpty) 'agentName': agentName,
+      },
+    );
+    return res.data as Map<String, dynamic>;
   }
 
   // =============== INVOICES ===============

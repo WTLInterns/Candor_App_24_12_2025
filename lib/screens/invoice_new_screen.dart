@@ -241,7 +241,32 @@ class _InvoiceNewScreenState extends State<InvoiceNewScreen> {
                     .map(
                       (p) => DropdownMenuItem<int>(
                         value: p['id'] as int,
-                        child: Text(p['name']?.toString() ?? '-'),
+                        child: Row(
+                          children: [
+                            if (p['imageUrl'] != null &&
+                                (p['imageUrl'] as String).isNotEmpty) ...[
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Image.network(
+                                  '${ApiClient().dio.options.baseUrl}${p['imageUrl']}',
+                                  width: 28,
+                                  height: 28,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.image_not_supported,
+                                          size: 20, color: Colors.grey),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            Expanded(
+                              child: Text(
+                                p['name']?.toString() ?? '-',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     )
                     .toList(),
