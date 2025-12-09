@@ -1,35 +1,101 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../providers/session_provider.dart';
 import 'package:provider/provider.dart';
 
+import '../services/location_sender.dart';
 import 'dashboard_screen.dart';
 import 'attendance_main_screen.dart';
 import 'leads_screen.dart';
 import 'live_location_screen.dart';
+import 'activity_log_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  State<MainShell> createState() => MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class MainShellState extends State<MainShell> {
   int _currentIndex = 0;
-
-  late final List<Widget> _pages;
+  LocationSender? _locationSender;
 
   @override
   void initState() {
     super.initState();
-    _pages = const [
-      DashboardScreen(),
-      AttendanceMainScreen(),
-      LeadsScreen(),
-      LiveLocationScreen(),
-      _ProfileScreen(),
-    ];
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final session = context.read<SessionProvider>();
+      final agentId = session.agentId;
+      if (agentId != null) {
+        _initLocationTracking(agentId);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _locationSender?.stop();
+    super.dispose();
+  }
+
+  void setTabIndex(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
+  Future<void> _initLocationTracking(String agentId) async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      if (!mounted) return;
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text('Location tracking'),
+            content: const Text(
+              'CandorWaterTech uses your location to show live tracking on the admin map '
+              'and attach coordinates to your visits. Please allow location access on the next prompt.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Not now'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Continue'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (proceed != true) {
+        return;
+      }
+
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Location permission denied. Live tracking will be disabled until you enable it in Settings.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    _locationSender = LocationSender(agentId);
+    await _locationSender!.start();
   }
 
   @override
@@ -41,11 +107,30 @@ class _MainShellState extends State<MainShell> {
     print('Profile session -> email: ' + (session.email ?? 'null') +
         ', phone: ' + (session.phone ?? 'null'));
 
+    Widget body;
+    switch (_currentIndex) {
+      case 0:
+        body = const DashboardScreen();
+        break;
+      case 1:
+        body = const AttendanceMainScreen();
+        break;
+      case 2:
+        body = const LeadsScreen();
+        break;
+      case 3:
+        body = const LiveLocationScreen();
+        break;
+      case 4:
+        body = const ActivityLogScreen();
+        break;
+      default:
+        body = const _ProfileScreen();
+        break;
+    }
+
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _pages,
-      ),
+      body: body,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -90,6 +175,11 @@ class _MainShellState extends State<MainShell> {
               label: 'Live',
             ),
             BottomNavigationBarItem(
+              icon: Icon(Icons.event_note_outlined),
+              activeIcon: Icon(Icons.event_note),
+              label: 'Log',
+            ),
+            BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
               label: 'Profile',
@@ -113,6 +203,7 @@ class _ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         title: const Text('Profile'),
       ),
       body: Container(

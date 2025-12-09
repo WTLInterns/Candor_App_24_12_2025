@@ -12,7 +12,7 @@ class ApiClient {
   ApiClient._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'http://192.168.1.100:8080/api/v1',
+        baseUrl: 'http://192.168.1.131:8080/api/v1',
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
       ),
@@ -45,6 +45,20 @@ class ApiClient {
       'accuracy': accuracy,
       'status': 'ACTIVE',
     });
+  }
+
+  Future<Map<String, dynamic>?> fetchLatestLocationForAgent(
+    String agentId,
+  ) async {
+    final res = await dio.get('/location/online');
+    final data = res.data as List<dynamic>? ?? [];
+    for (final item in data) {
+      final map = item as Map<String, dynamic>;
+      if (map['agentId']?.toString() == agentId) {
+        return map;
+      }
+    }
+    return null;
   }
 
   // =============== LEADS ===============
@@ -126,12 +140,28 @@ class ApiClient {
   Future<void> punchOutAttendance({
     required String agentId,
     required String agentName,
+    File? imageFile,
+    double? latitude,
+    double? longitude,
+    String? reason,
   }) async {
-    await dio.post('/attendance/field/punch-out', data: {
+    final formData = FormData.fromMap({
       'agentId': agentId,
       'agentName': agentName,
-      'reason': null,
+      if (reason != null) 'reason': reason,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (imageFile != null)
+        'image': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: path.basename(imageFile.path),
+        ),
     });
+
+    await dio.post(
+      '/attendance/field/punch-out',
+      data: formData,
+    );
   }
 
   Future<List<Map<String, dynamic>>> fetchMonthlyPunchRecords({

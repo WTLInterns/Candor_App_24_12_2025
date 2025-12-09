@@ -79,61 +79,41 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF0A66C2), Color(0xFF4FA0FF)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
+                        Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 84,
+                                height: 84,
+                                child: Image.asset(
+                                  'lib/Images/CWT New Logo 1-fotor-bg-remover-2025120412252.png',
+                                  fit: BoxFit.contain,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.25),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ],
                               ),
-                              child: const Icon(
-                                Icons.send,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            const Expanded(
-                              child: Text(
+                              const SizedBox(height: 8),
+                              const Text(
                                 'Candor Water Tech',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 24),
                         Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withOpacity(0.14),
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
+                              color: Colors.white.withOpacity(0.35),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                blurRadius: 24,
-                                offset: const Offset(0, 12),
-                              ),
-                            ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     'Forgot Password?',
                                     style: TextStyle(
                                       fontSize: 12,
-                                      color: Color(0xFFE6F3FF),
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ],
@@ -264,7 +244,7 @@ class _GlassTextField extends StatelessWidget {
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFFBEBEBE)),
+        hintStyle: const TextStyle(color: Colors.white),
         prefixIcon: Icon(icon, color: const Color(0xFFEEDCFF), size: 20),
         filled: true,
         fillColor: Colors.white.withOpacity(0.08),
@@ -303,7 +283,7 @@ class _GlassPasswordFieldState extends State<_GlassPasswordField> {
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: '••••••••',
-        hintStyle: const TextStyle(color: Color(0xFFBEBEBE)),
+        hintStyle: const TextStyle(color: Colors.white),
         prefixIcon:
             const Icon(Icons.lock_outline, color: Color(0xFFEEDCFF), size: 20),
         suffixIcon: IconButton(

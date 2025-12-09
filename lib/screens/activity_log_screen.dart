@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/session_provider.dart';
@@ -177,7 +178,11 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         title: const Text('Activity Log'),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -185,105 +190,164 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Add Activity'),
       ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: _loading && _activities.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : _activities.isEmpty
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(24),
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.event_note_outlined,
-                            size: 40,
-                            color: Color(0xFF9CA3AF),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            _loadMessage ??
-                                'No activities yet. Tap "Add Activity" to create your first activity.',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF4B5563),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _activities.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (ctx, index) {
-                      final a = _activities[index];
-                      final time = a['time'] as String? ?? '';
-                      final customer = a['customer'] as String? ?? a['customerName'] as String? ?? '-';
-                      final activity = a['activity'] as String? ?? '';
-                      final status = (a['status'] as String? ?? 'IN_PROGRESS').toUpperCase();
-                      Color chipColor;
-                      if (status == 'COMPLETED') {
-                        chipColor = const Color(0xFF22C55E);
-                      } else if (status == 'SCHEDULED') {
-                        chipColor = const Color(0xFFF59E0B);
-                      } else {
-                        chipColor = const Color(0xFF0EA5E9);
-                      }
-                      return Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: ListTile(
-                          title: Text(activity),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 4),
-                              Text('Customer: $customer'),
-                              Text('Time: $time'),
-                            ],
-                          ),
-                          trailing: Wrap(
-                            spacing: 4,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: chipColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: Text(
-                                  status.replaceAll('_', ' '),
-                                  style: TextStyle(
-                                    color: chipColor,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0A66C2), Color(0xFF4FA0FF), Color(0xFFE6F3FF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 480),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 18,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: RefreshIndicator(
+                  onRefresh: _load,
+                  child: _loading && _activities.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : _activities.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 32),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(
+                                        Icons.event_note_outlined,
+                                        size: 40,
+                                        color: Color(0xFF9CA3AF),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        _loadMessage ??
+                                            'No activities yet. Tap "Add Activity" to create your first activity.',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF4B5563),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit, size: 18),
-                                onPressed: () => _openAddOrEdit(existing: a),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline, size: 18),
-                                onPressed: () => _delete(a['id'] as String),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                              ],
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.symmetric(vertical: 4),
+                              itemCount: _activities.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 8),
+                              itemBuilder: (ctx, index) {
+                                final a = _activities[index];
+                                final time = a['time'] as String? ?? '';
+                                final customer = a['customer'] as String? ?? a['customerName'] as String? ?? '-';
+                                final activity = a['activity'] as String? ?? '';
+                                final status = (a['status'] as String? ?? 'IN_PROGRESS').toUpperCase();
+                                Color chipColor;
+                                if (status == 'COMPLETED') {
+                                  chipColor = const Color(0xFF22C55E);
+                                } else if (status == 'SCHEDULED') {
+                                  chipColor = const Color(0xFFF59E0B);
+                                } else {
+                                  chipColor = const Color(0xFF0EA5E9);
+                                }
+                                return Card(
+                                  elevation: 0,
+                                  color: const Color(0xFFF9FAFB),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                    side: BorderSide(
+                                      color: const Color(0xFFE5E7EB).withOpacity(0.9),
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    title: Text(
+                                      activity,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF111827),
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Customer: $customer',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF4B5563),
+                                          ),
+                                        ),
+                                        Text(
+                                          'Time: $time',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Color(0xFF6B7280),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    trailing: Wrap(
+                                      spacing: 4,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: chipColor.withOpacity(0.08),
+                                            borderRadius: BorderRadius.circular(999),
+                                          ),
+                                          child: Text(
+                                            status.replaceAll('_', ' '),
+                                            style: TextStyle(
+                                              color: chipColor,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, size: 18),
+                                          color: const Color(0xFF4B5563),
+                                          onPressed: () => _openAddOrEdit(existing: a),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete_outline, size: 18),
+                                          color: const Color(0xFFDC2626),
+                                          onPressed: () => _delete(a['id'] as String),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

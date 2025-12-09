@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -27,8 +28,57 @@ class _LiveLocationScreenState extends State<LiveLocationScreen> {
   Future<void> _startListening() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
+      if (!mounted) return;
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) {
+          return AlertDialog(
+            title: const Text('Location permission required'),
+            content: const Text(
+              'Live location needs access to your device location. '
+              'Please allow location access on the next prompt.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Continue'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (proceed != true) {
+        return;
+      }
+
       permission = await Geolocator.requestPermission();
     }
+
+    if (permission == LocationPermission.denied) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Location permission denied. Live location cannot be shown.'),
+        ),
+      );
+      return;
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Location permission permanently denied. Enable it from Settings to see live location.'),
+        ),
+      );
+      return;
+    }
+
     final allowed = permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse;
     if (!allowed) return;
@@ -78,6 +128,7 @@ class _LiveLocationScreenState extends State<LiveLocationScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         title: const Text('Live Location'),
       ),
       body: Container(

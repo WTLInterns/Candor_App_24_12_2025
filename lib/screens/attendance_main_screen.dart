@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/session_provider.dart';
@@ -32,6 +33,7 @@ class _AttendanceMainScreenState extends State<AttendanceMainScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
         title: const Text('Attendance'),
         bottom: TabBar(
           controller: _tabController,
@@ -178,6 +180,7 @@ class _AttendanceRecordsScreenState extends State<_AttendanceRecordsScreen> {
               final status = r['status']?.toString() ?? '';
               final punchIn = r['punchInTime']?.toString() ?? '';
               final punchOut = r['punchOutTime']?.toString() ?? '';
+              final address = r['address']?.toString() ?? '';
               final imageUrl = r['imageUrl']?.toString();
 
               return Card(
@@ -199,7 +202,10 @@ class _AttendanceRecordsScreenState extends State<_AttendanceRecordsScreen> {
                           child: Icon(Icons.event_available),
                         ),
                   title: Text(date),
-                  subtitle: Text('Status: $status\nIn: $punchIn   Out: $punchOut'),
+                  subtitle: Text(
+                    'Status: $status\nIn: $punchIn   Out: $punchOut'
+                    '${address.isNotEmpty ? '\nAddress: $address' : ''}',
+                  ),
                 ),
               );
             }).toList(),

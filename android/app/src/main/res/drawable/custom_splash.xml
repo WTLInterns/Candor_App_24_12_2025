@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background color (white) -->
+    <item android:drawable="@android:color/white" />
+
+    <!-- Logo with size control and padding -->
+    <item 
+        android:width="120dp"
+        android:height="120dp"
+        android:gravity="center">
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/cwt_new_logo"
+            android:width="120dp"
+            android:height="120dp"
+            android:scaleType="fitCenter" />
+    </item>
+</layer-list>

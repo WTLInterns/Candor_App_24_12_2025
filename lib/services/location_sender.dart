@@ -38,7 +38,7 @@ class LocationSender {
         foregroundNotificationConfig: const ForegroundNotificationConfig(
           notificationTitle: 'Field tracking active',
           notificationText: 'Your live location is being shared with the office.',
-          enableWakeLock: true,
+          enableWakeLock: false,
         ),
       );
     } else {

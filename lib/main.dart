@@ -18,8 +18,8 @@ class FieldForceProApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => SessionProvider(SessionService())..load(),
-      child: Consumer<SessionProvider>(
-        builder: (_, session, __) {
+      child: Builder(
+        builder: (context) {
           final baseColorScheme = const ColorScheme.light(
             primary: Color(0xFF0052CC), // Royal Blue
             secondary: Color(0xFF0A1F44), // Deep Navy
@@ -125,14 +125,28 @@ class FieldForceProApp extends StatelessWidget {
           );
 
           return MaterialApp(
-            title: 'FieldForcePro Tracker',
+            title: 'CandorWaterTech',
             debugShowCheckedModeBanner: false,
             theme: theme,
-            home:
-                session.isLoggedIn ? const MainShell() : const LoginScreen(),
+            home: const HomePage(),
           );
         },
       ),
     );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final session = context.watch<SessionProvider>();
+
+    if (session.isLoggedIn) {
+      return const MainShell();
+    }
+
+    return const LoginScreen();
   }
 }

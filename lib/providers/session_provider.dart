@@ -9,6 +9,7 @@ class SessionProvider extends ChangeNotifier {
   int? _employeeCode;
   String? _email;
   String? _phone;
+  bool _loading = true;
 
   SessionProvider(this._sessionService);
 
@@ -18,6 +19,7 @@ class SessionProvider extends ChangeNotifier {
   String? get email => _email;
   String? get phone => _phone;
   bool get isLoggedIn => _agentId != null;
+  bool get loading => _loading;
 
   Future<void> load() async {
     _agentId = await _sessionService.getAgentId();
@@ -25,6 +27,8 @@ class SessionProvider extends ChangeNotifier {
     _employeeCode = await _sessionService.getEmployeeCode();
     _email = await _sessionService.getEmail();
     _phone = await _sessionService.getPhone();
+
+    _loading = false;
     notifyListeners();
   }
 
@@ -51,6 +55,7 @@ class SessionProvider extends ChangeNotifier {
     _employeeCode = null;
     _email = null;
     _phone = null;
+    _loading = false;
     notifyListeners();
   }
 }

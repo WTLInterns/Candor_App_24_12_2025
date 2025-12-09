@@ -3,6 +3,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <!-- Gallery / media access for company logo & stamp (image_picker + permission_handler) -->
     <!-- Android 13+ -->
@@ -13,7 +14,7 @@
         android:maxSdkVersion="32" />
 
     <application
-        android:label="fieldforcepro_tracker"
+        android:label="CandorWaterTech"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
