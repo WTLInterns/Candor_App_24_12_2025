@@ -578,10 +578,12 @@ class _InvoicePageState extends State<InvoicePage> {
 
   Future<Uint8List> _buildPdfBytes() async {
     final pdf = pw.Document();
-    final logoImg =
-        _logo != null ? pw.MemoryImage(await _logo!.readAsBytes()) : null;
-    final stampImg =
-        _stamp != null ? pw.MemoryImage(await _stamp!.readAsBytes()) : null;
+    final logoImg = _logo != null
+        ? pw.MemoryImage(await _logo!.readAsBytes())
+        : null;
+    final stampImg = _stamp != null
+        ? pw.MemoryImage(await _stamp!.readAsBytes())
+        : null;
 
     pw.ThemeData? theme;
     try {
@@ -609,18 +611,18 @@ class _InvoicePageState extends State<InvoicePage> {
           final total = subtotal + cgst + sgst;
 
           pw.Widget labelValue(String label, String value) => pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Expanded(
-                    child: pw.Text(
-                      label,
-                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                    ),
-                    flex: 2,
-                  ),
-                  pw.Expanded(child: pw.Text(value), flex: 5),
-                ],
-              );
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Expanded(
+                child: pw.Text(
+                  label,
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
+                flex: 2,
+              ),
+              pw.Expanded(child: pw.Text(value), flex: 5),
+            ],
+          );
 
           return [
             pw.Stack(
@@ -773,10 +775,12 @@ class _InvoicePageState extends State<InvoicePage> {
                             ...List.generate(_items.length, (i) {
                               final it = _items[i];
                               final lineSubtotal = it.amount;
-                              final lineCgst =
-                                  _withGst ? lineSubtotal * 0.09 : 0.0;
-                              final lineSgst =
-                                  _withGst ? lineSubtotal * 0.09 : 0.0;
+                              final lineCgst = _withGst
+                                  ? lineSubtotal * 0.09
+                                  : 0.0;
+                              final lineSgst = _withGst
+                                  ? lineSubtotal * 0.09
+                                  : 0.0;
                               final lineTotal =
                                   lineSubtotal + lineCgst + lineSgst;
 
@@ -1087,16 +1091,18 @@ class _InvoicePageState extends State<InvoicePage> {
         'customerEmail': _billedToEmail.text.trim(),
 
         'items': _items
-            .map((i) => {
-                  'productId': null,
-                  'name': i.name,
-                  'sku': null,
-                  'unitPrice': i.rate,
-                  'quantity': i.qty,
-                  'discount': 0,
-                  'tax': 0,
-                  'lineTotal': i.amount,
-                })
+            .map(
+              (i) => {
+                'productId': null,
+                'name': i.name,
+                'sku': null,
+                'unitPrice': i.rate,
+                'quantity': i.qty,
+                'discount': 0,
+                'tax': 0,
+                'lineTotal': i.amount,
+              },
+            )
             .toList(),
         'subtotal': subtotal,
         'totalDiscount': 0,
@@ -1178,10 +1184,13 @@ class _InvoicePageState extends State<InvoicePage> {
     }
   }
 
-  Future<void> _uploadPdf(String invoiceId, Uint8List data,
-      {required String fileName}) async {
+  Future<void> _uploadPdf(
+    String invoiceId,
+    Uint8List data, {
+    required String fileName,
+  }) async {
     final uri = Uri.parse(
-      'http://192.168.1.131:8080/api/v1/invoices/$invoiceId/pdf',
+      'http://192.168.1.106:8080/api/v1/invoices/$invoiceId/pdf',
     );
 
     final request = http.MultipartRequest('POST', uri);

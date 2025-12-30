@@ -14,7 +14,8 @@ class AttendanceWorkFieldScreen extends StatefulWidget {
   const AttendanceWorkFieldScreen({super.key});
 
   @override
-  State<AttendanceWorkFieldScreen> createState() => _AttendanceWorkFieldScreenState();
+  State<AttendanceWorkFieldScreen> createState() =>
+      _AttendanceWorkFieldScreenState();
 }
 
 class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
@@ -91,7 +92,10 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
       return;
     }
 
-    final picked = await _picker.pickImage(source: ImageSource.camera, imageQuality: 80);
+    final picked = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 80,
+    );
     if (picked == null) return;
     setState(() {
       _photoFile = File(picked.path);
@@ -139,7 +143,9 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Location permission denied. Unable to capture coordinates.'),
+              content: Text(
+                'Location permission denied. Unable to capture coordinates.',
+              ),
             ),
           );
           return;
@@ -150,12 +156,16 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Location permission permanently denied. Please enable it from Settings.'),
+            content: Text(
+              'Location permission permanently denied. Please enable it from Settings.',
+            ),
           ),
         );
         return;
       }
-      final position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
       setState(() {
         _latitude = position.latitude;
         _longitude = position.longitude;
@@ -270,9 +280,9 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
       );
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to punch in')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to punch in')));
     } finally {
       if (mounted) {
         setState(() {
@@ -285,7 +295,8 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
   Future<bool> _hasAlreadyPunchedInToday(String agentId) async {
     try {
       final now = DateTime.now();
-      final ym = '${now.year.toString().padLeft(4, '0')}-'
+      final ym =
+          '${now.year.toString().padLeft(4, '0')}-'
           '${now.month.toString().padLeft(2, '0')}';
 
       final records = await ApiClient().fetchMonthlyPunchRecords(
@@ -293,7 +304,8 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
         yearMonth: ym,
       );
 
-      final todayStr = '${now.year.toString().padLeft(4, '0')}-'
+      final todayStr =
+          '${now.year.toString().padLeft(4, '0')}-'
           '${now.month.toString().padLeft(2, '0')}-'
           '${now.day.toString().padLeft(2, '0')}';
 
@@ -313,7 +325,8 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
   Future<bool> _hasAlreadyPunchedOutToday(String agentId) async {
     try {
       final now = DateTime.now();
-      final ym = '${now.year.toString().padLeft(4, '0')}-'
+      final ym =
+          '${now.year.toString().padLeft(4, '0')}-'
           '${now.month.toString().padLeft(2, '0')}';
 
       final records = await ApiClient().fetchMonthlyPunchRecords(
@@ -321,7 +334,8 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
         yearMonth: ym,
       );
 
-      final todayStr = '${now.year.toString().padLeft(4, '0')}-'
+      final todayStr =
+          '${now.year.toString().padLeft(4, '0')}-'
           '${now.month.toString().padLeft(2, '0')}-'
           '${now.day.toString().padLeft(2, '0')}';
 
@@ -373,14 +387,14 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
         reason: null,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Punch Out successful')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Punch Out successful')));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to punch out')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to punch out')));
     } finally {
       if (mounted) {
         setState(() {
@@ -396,136 +410,313 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Work From Field Attendance'),
-        elevation: 0.5,
+        title: const Text('Work From Field'),
+        elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
+        backgroundColor: Colors.white,
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0A66C2), Color(0xFF4FA0FF), Color(0xFFE6F3FF)],
+            colors: [Color(0xFFF5F7FA), Color(0xFFEEF2F8)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
+                constraints: const BoxConstraints(maxWidth: 520),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 8),
-                    Card(
-                      elevation: 10,
-                      shape: RoundedRectangleBorder(
+                    // Camera Card
+                    Container(
+                      decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Container(
-                              height: 220,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(18),
-                                color: Colors.grey.shade100,
-                                border: Border.all(color: Colors.grey.shade300),
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: _photoFile == null
-                                  ? Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.photo_camera_outlined,
-                                          size: 40,
-                                          color: Colors.grey.shade500,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Container(
+                          height: 240,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.white, Colors.grey.shade50],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.6),
+                            ),
+                          ),
+                          clipBehavior: Clip.antiAlias,
+                          child: _photoFile == null
+                              ? Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      width: 64,
+                                      height: 64,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xFF0052CC),
+                                            Color(0xFF2563EB),
+                                          ],
                                         ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'No photo captured yet',
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            color: Colors.grey.shade600,
+                                      ),
+                                      child: const Icon(
+                                        Icons.photo_camera_outlined,
+                                        size: 32,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Capture Your Photo',
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF0D1B2A),
+                                          ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'No photo captured yet',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: const Color(0xFF94A3B8),
+                                          ),
+                                    ),
+                                  ],
+                                )
+                              : Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    Image.file(_photoFile!, fit: BoxFit.cover),
+                                    Positioned(
+                                      top: 12,
+                                      right: 12,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black.withOpacity(0.6),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
                                           ),
                                         ),
-                                      ],
-                                    )
-                                  : Image.file(
-                                      _photoFile!,
-                                      fit: BoxFit.cover,
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.check_circle,
+                                              size: 16,
+                                              color: Color(0xFF22C55E),
+                                            ),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              'Captured',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                            ),
-                            const SizedBox(height: 12),
-                            if (_photoFile == null)
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0052CC),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                  icon: const Icon(Icons.camera_alt_outlined),
-                                  label: const Text('Capture photo & location'),
-                                  onPressed: _capturePhotoAndLocation,
+                                  ],
                                 ),
-                              )
-                            else
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      icon: const Icon(Icons.camera_alt_outlined),
-                                      label: const Text('Retake photo'),
-                                      onPressed: _capturePhoto,
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      icon: const Icon(Icons.my_location_outlined),
-                                      label: const Text('Refresh location'),
-                                      onPressed: _getLocation,
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(16),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Action Buttons
+                    if (_photoFile == null)
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0052CC),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            elevation: 4,
+                          ),
+                          icon: const Icon(Icons.camera_alt_outlined, size: 20),
+                          label: const Text(
+                            'Capture Photo & Location',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          onPressed: _capturePhotoAndLocation,
+                        ),
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(
+                                Icons.camera_alt_outlined,
+                                size: 18,
                               ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Location details',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
+                              label: const Text('Retake'),
+                              onPressed: _capturePhoto,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                side: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                  width: 1.5,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 6),
-                            if (_loadingLocation)
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 8.0),
-                                child: LinearProgressIndicator(minHeight: 3),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(
+                                Icons.my_location_outlined,
+                                size: 18,
                               ),
+                              label: const Text('Refresh'),
+                              onPressed: _getLocation,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                side: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 20),
+
+                    // Location Card
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.white,
+                        border: Border.all(
+                          color: const Color(0xFFE5E7EB),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: const LinearGradient(
+                                    colors: [
+                                      Color(0xFF0052CC),
+                                      Color(0xFF2563EB),
+                                    ],
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.location_on_outlined,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Current Location',
+                                      style: theme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF0D1B2A),
+                                          ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _loadingLocation
+                                          ? 'Fetching coordinates...'
+                                          : 'GPS Coordinates',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: const Color(0xFF94A3B8),
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (_loadingLocation)
+                                const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (_loadingLocation)
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                minHeight: 3,
+                                backgroundColor: Colors.grey.shade200,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF0052CC),
+                                ),
+                              ),
+                            )
+                          else
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
-                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(12),
+                                color: const Color(0xFFF0F4F8),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -534,86 +725,134 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
                                     children: [
                                       const Icon(
                                         Icons.location_on_outlined,
-                                        size: 18,
+                                        size: 16,
                                         color: Color(0xFF0052CC),
                                       ),
-                                      const SizedBox(width: 6),
+                                      const SizedBox(width: 8),
                                       Text(
-                                        'Current coordinates',
-                                        style: theme.textTheme.bodyMedium?.copyWith(
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                        'Latitude',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: const Color(0xFF64748B),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        _latitude?.toStringAsFixed(6) ?? '-',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: const Color(0xFF0D1B2A),
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                       ),
                                     ],
                                   ),
                                   const SizedBox(height: 8),
-                                  Text(
-                                    'Latitude: ${_latitude?.toStringAsFixed(6) ?? '-'}',
-                                    style: theme.textTheme.bodyMedium,
-                                  ),
-                                  Text(
-                                    'Longitude: ${_longitude?.toStringAsFixed(6) ?? '-'}',
-                                    style: theme.textTheme.bodyMedium,
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.location_on_outlined,
+                                        size: 16,
+                                        color: Color(0xFF0052CC),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Longitude',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: const Color(0xFF64748B),
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        _longitude?.toStringAsFixed(6) ?? '-',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: const Color(0xFF0D1B2A),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: _submitting ? null : _punchIn,
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    icon: _submitting
-                                        ? const SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                                            ),
-                                          )
-                                        : const Icon(Icons.login),
-                                    label: Text(_submitting ? 'Working…' : 'Punch In'),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.redAccent,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    onPressed: _submitting ? null : _punchOut,
-                                    icon: _submitting
-                                        ? const SizedBox(
-                                            width: 16,
-                                            height: 16,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(Colors.white),
-                                            ),
-                                          )
-                                        : const Icon(Icons.logout),
-                                    label: Text(_submitting ? 'Working…' : 'Punch Out'),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Punch Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _submitting ? null : _punchIn,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF22C55E),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              elevation: 4,
+                            ),
+                            icon: _submitting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(Icons.login, size: 18),
+                            label: Text(
+                              _submitting ? 'Processing…' : 'Punch In',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFEF4444),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              elevation: 4,
+                            ),
+                            onPressed: _submitting ? null : _punchOut,
+                            icon: _submitting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(Icons.logout, size: 18),
+                            label: Text(
+                              _submitting ? 'Processing…' : 'Punch Out',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

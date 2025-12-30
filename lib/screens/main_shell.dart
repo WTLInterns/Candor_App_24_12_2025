@@ -46,6 +46,7 @@ class MainShellState extends State<MainShell> {
       _currentIndex = index;
     });
   }
+
   Future<void> _initLocationTracking(String agentId) async {
     LocationPermission permission = await Geolocator.checkPermission();
 
@@ -104,8 +105,12 @@ class MainShellState extends State<MainShell> {
 
     // TEMP: debug log for profile session values
     // ignore: avoid_print
-    print('Profile session -> email: ' + (session.email ?? 'null') +
-        ', phone: ' + (session.phone ?? 'null'));
+    print(
+      'Profile session -> email: ' +
+          (session.email ?? 'null') +
+          ', phone: ' +
+          (session.phone ?? 'null'),
+    );
 
     Widget body;
     switch (_currentIndex) {
@@ -134,10 +139,13 @@ class MainShellState extends State<MainShell> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
+          border: Border(
+            top: BorderSide(color: const Color(0xFFE5E7EB), width: 1),
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 20,
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 24,
               offset: const Offset(0, -8),
             ),
           ],
@@ -145,43 +153,152 @@ class MainShellState extends State<MainShell> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
+          backgroundColor: Colors.white,
+          selectedItemColor: const Color(0xFF0052CC),
           unselectedItemColor: const Color(0xFF94A3B8),
+          selectedLabelStyle: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+          ),
+          elevation: 0,
           showUnselectedLabels: true,
           onTap: (index) {
             setState(() {
               _currentIndex = index;
             });
           },
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard_rounded),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == 0
+                      ? const Color(0xFF0052CC).withOpacity(0.1)
+                      : Colors.transparent,
+                ),
+                child: const Icon(Icons.home_outlined, size: 22),
+              ),
+              activeIcon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF0052CC).withOpacity(0.1),
+                ),
+                child: const Icon(Icons.home_rounded, size: 22),
+              ),
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_turned_in_outlined),
-              activeIcon: Icon(Icons.assignment_turned_in),
-              label: 'Form',
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == 1
+                      ? const Color(0xFF0052CC).withOpacity(0.1)
+                      : Colors.transparent,
+                ),
+                child: const Icon(
+                  Icons.assignment_turned_in_outlined,
+                  size: 22,
+                ),
+              ),
+              activeIcon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF0052CC).withOpacity(0.1),
+                ),
+                child: const Icon(Icons.assignment_turned_in, size: 22),
+              ),
+              label: 'Attendance',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_outlined),
-              activeIcon: Icon(Icons.assignment_rounded),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == 2
+                      ? const Color(0xFF0052CC).withOpacity(0.1)
+                      : Colors.transparent,
+                ),
+                child: const Icon(Icons.assignment_outlined, size: 22),
+              ),
+              activeIcon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF0052CC).withOpacity(0.1),
+                ),
+                child: const Icon(Icons.assignment_rounded, size: 22),
+              ),
               label: 'Leads',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.map_outlined),
-              activeIcon: Icon(Icons.map_rounded),
-              label: 'Live',
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == 3
+                      ? const Color(0xFF0052CC).withOpacity(0.1)
+                      : Colors.transparent,
+                ),
+                child: const Icon(Icons.location_on_outlined, size: 22),
+              ),
+              activeIcon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF0052CC).withOpacity(0.1),
+                ),
+                child: const Icon(Icons.location_on, size: 22),
+              ),
+              label: 'Location',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.event_note_outlined),
-              activeIcon: Icon(Icons.event_note),
-              label: 'Log',
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == 4
+                      ? const Color(0xFF0052CC).withOpacity(0.1)
+                      : Colors.transparent,
+                ),
+                child: const Icon(Icons.event_note_outlined, size: 22),
+              ),
+              activeIcon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF0052CC).withOpacity(0.1),
+                ),
+                child: const Icon(Icons.event_note, size: 22),
+              ),
+              label: 'Activity',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _currentIndex == 5
+                      ? const Color(0xFF0052CC).withOpacity(0.1)
+                      : Colors.transparent,
+                ),
+                child: const Icon(Icons.person_outline, size: 22),
+              ),
+              activeIcon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF0052CC).withOpacity(0.1),
+                ),
+                child: const Icon(Icons.person, size: 22),
+              ),
               label: 'Profile',
             ),
           ],
@@ -241,13 +358,11 @@ class _ProfileScreen extends StatelessWidget {
                       radius: 34,
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       child: Text(
-                        (session.agentName ?? '-')
-                                .trim()
-                                .isNotEmpty
+                        (session.agentName ?? '-').trim().isNotEmpty
                             ? session.agentName!
-                                .trim()
-                                .substring(0, 1)
-                                .toUpperCase()
+                                  .trim()
+                                  .substring(0, 1)
+                                  .toUpperCase()
                             : '-',
                         style: const TextStyle(
                           color: Colors.white,
@@ -261,9 +376,9 @@ class _ProfileScreen extends StatelessWidget {
                       session.agentName ?? 'Agent',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF0F172A),
-                          ),
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF0F172A),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -298,12 +413,13 @@ class _ProfileScreen extends StatelessWidget {
                     const SizedBox(height: 16),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.logout, color: Color(0xFFDC2626)),
+                      leading: const Icon(
+                        Icons.logout,
+                        color: Color(0xFFDC2626),
+                      ),
                       title: const Text(
                         'Logout',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.w500),
                       ),
                       onTap: () async {
                         await session.logout();

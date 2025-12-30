@@ -184,9 +184,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
       await ApiClient().deleteLead(id);
       _loadLeads();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete lead')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to delete lead')));
     }
   }
 
@@ -196,26 +196,31 @@ class _LeadsScreenState extends State<LeadsScreen> {
       final name = (lead['companyName'] ?? '').toString().toLowerCase();
       final product = (lead['product'] ?? '').toString().toLowerCase();
       final status = (lead['status'] ?? 'NEW').toString();
-      final matchesSearch = _search.isEmpty ||
+      final matchesSearch =
+          _search.isEmpty ||
           name.contains(_search.toLowerCase()) ||
           product.contains(_search.toLowerCase());
-      final matchesStatus =
-          _statusFilter == 'ALL' || status == _statusFilter;
+      final matchesStatus = _statusFilter == 'ALL' || status == _statusFilter;
       return matchesSearch && matchesStatus;
     }).toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
         title: const Text('Leads'),
+        titleTextStyle: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF0D1B2A),
+        ),
       ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0A66C2), Color(0xFF4FA0FF), Color(0xFFE6F3FF)],
+            colors: [Color(0xFFF5F7FA), Color(0xFFEEF2F8)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -228,32 +233,56 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 child: Container(
-                  constraints: const BoxConstraints(maxWidth: 480),
+                  constraints: const BoxConstraints(maxWidth: 520),
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.white.withOpacity(0.4)),
+                    border: Border.all(
+                      color: const Color(0xFFE5E7EB),
+                      width: 1,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.18),
-                        blurRadius: 24,
-                        offset: const Offset(0, 12),
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // Search Bar
                       TextField(
                         decoration: InputDecoration(
-                          hintText: 'Search by customer or product',
-                          prefixIcon: const Icon(Icons.search),
+                          hintText: 'Search leads...',
+                          prefixIcon: const Icon(Icons.search, size: 20),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: const Color(0xFFF0F4F8),
                           isDense: true,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE5E7EB),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE5E7EB),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF0052CC),
+                              width: 1.5,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
                           ),
                         ),
                         onChanged: (value) {
@@ -262,9 +291,10 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           });
                         },
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
+                      // Status Filter Chips
                       SizedBox(
-                        height: 32,
+                        height: 36,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
                           children: [
@@ -319,19 +349,52 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
+                      // Content
                       if (_loading && _leads.isEmpty)
-                        const Center(child: Padding(
-                          padding: EdgeInsets.all(24),
-                          child: CircularProgressIndicator(),
-                        ))
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32),
+                            child: CircularProgressIndicator(),
+                          ),
+                        )
                       else if (visibleLeads.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.all(24),
+                        Padding(
+                          padding: const EdgeInsets.all(32),
                           child: Center(
-                            child: Text(
-                              'No leads found. Please add a lead.',
-                              textAlign: TextAlign.center,
+                            child: Column(
+                              children: [
+                                Container(
+                                  width: 56,
+                                  height: 56,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: const Color(0xFFF0F4F8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.assignment_outlined,
+                                    size: 28,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'No leads found',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF0D1B2A),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                const Text(
+                                  'Add a new lead to get started',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         )
@@ -340,27 +403,33 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: visibleLeads.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 12),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final lead = visibleLeads[index];
                             final status = (lead['status'] ?? 'NEW').toString();
 
                             Color statusColor;
+                            IconData statusIcon;
                             switch (status) {
                               case 'CLOSED_WON':
                               case 'COMPLETED':
                                 statusColor = const Color(0xFF22C55E);
+                                statusIcon = Icons.check_circle;
                                 break;
                               case 'PROPOSAL':
                               case 'IN_PROGRESS':
-                                statusColor = const Color(0xFFFACC15);
+                                statusColor = const Color(0xFFF59E0B);
+                                statusIcon = Icons.schedule;
                                 break;
                               case 'CLOSED_LOST':
                               case 'CANCELLED':
                                 statusColor = const Color(0xFFEF4444);
+                                statusIcon = Icons.cancel;
                                 break;
                               default:
-                                statusColor = const Color(0xFF2F80ED);
+                                statusColor = const Color(0xFF0EA5E9);
+                                statusIcon = Icons.fiber_new;
                             }
 
                             return GestureDetector(
@@ -370,119 +439,180 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFE2E8F0),
+                                    color: const Color(0xFFE5E7EB),
+                                    width: 1,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.04),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 8),
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
                                     ),
                                   ],
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                  horizontal: 12,
-                                ),
-                                child: Row(
+                                padding: const EdgeInsets.all(14),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: const LinearGradient(
-                                          colors: [Color(0xFF0052CC), Color(0xFF2563EB)],
-                                        ),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        ((lead['companyName'] ?? '-') as String)
-                                            .substring(0, 1)
-                                            .toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            lead['companyName'] ?? '-',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 15,
-                                              color: Color(0xFF0D1B2A),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'Product: ${lead['product'] ?? '-'}  •  Qty: ${lead['quantity']?.toString() ?? '-'}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Color(0xFF4A5568),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'Lead ID: ${lead['id']}',
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: Color(0xFF94A3B8),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                    Row(
                                       children: [
                                         Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 4,
-                                          ),
+                                          width: 44,
+                                          height: 44,
                                           decoration: BoxDecoration(
-                                            color: statusColor.withOpacity(0.16),
-                                            borderRadius: BorderRadius.circular(999),
-                                            border: Border.all(
-                                              color: statusColor.withOpacity(0.6),
+                                            shape: BoxShape.circle,
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Color(0xFF0052CC),
+                                                Color(0xFF2563EB),
+                                              ],
                                             ),
                                           ),
+                                          alignment: Alignment.center,
                                           child: Text(
-                                            status,
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: statusColor,
-                                              fontWeight: FontWeight.w500,
+                                            ((lead['companyName'] ?? '-')
+                                                    as String)
+                                                .substring(0, 1)
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 16,
                                             ),
                                           ),
                                         ),
-                                        Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                                              tooltip: 'Chat',
-                                              onPressed: () => _openChat(lead),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                lead['companyName'] ?? '-',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 15,
+                                                  color: Color(0xFF0D1B2A),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              const SizedBox(height: 3),
+                                              Text(
+                                                lead['product'] ?? '-',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF64748B),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: statusColor.withOpacity(
+                                              0.12,
                                             ),
-                                            IconButton(
-                                              icon: const Icon(Icons.edit, size: 18),
-                                              tooltip: 'Edit',
-                                              onPressed: () => _openLeadForm(existing: lead),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
                                             ),
-                                            IconButton(
-                                              icon: const Icon(Icons.delete_outline, size: 18),
-                                              tooltip: 'Delete',
-                                              onPressed: () =>
-                                                  _deleteLead(lead['id'] as String),
+                                            border: Border.all(
+                                              color: statusColor.withOpacity(
+                                                0.3,
+                                              ),
                                             ),
-                                          ],
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                statusIcon,
+                                                size: 12,
+                                                color: statusColor,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                status.replaceAll('_', ' '),
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  color: statusColor,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.shopping_bag_outlined,
+                                                size: 14,
+                                                color: Color(0xFF94A3B8),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                'Qty: ${lead['quantity']?.toString() ?? '-'}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF64748B),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.chat_bubble_outline,
+                                            size: 18,
+                                          ),
+                                          color: const Color(0xFF0052CC),
+                                          onPressed: () => _openChat(lead),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(
+                                            minWidth: 32,
+                                            minHeight: 32,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.edit_outlined,
+                                            size: 18,
+                                          ),
+                                          color: const Color(0xFF0052CC),
+                                          onPressed: () =>
+                                              _openLeadForm(existing: lead),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(
+                                            minWidth: 32,
+                                            minHeight: 32,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.delete_outline,
+                                            size: 18,
+                                          ),
+                                          color: const Color(0xFFDC2626),
+                                          onPressed: () =>
+                                              _deleteLead(lead['id'] as String),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(
+                                            minWidth: 32,
+                                            minHeight: 32,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -502,7 +632,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _openLeadForm(),
-        child: const Icon(Icons.add),
+        backgroundColor: const Color(0xFF0052CC),
+        child: const Icon(Icons.add, size: 24),
       ),
     );
   }
@@ -538,9 +669,7 @@ class _StatusChip extends StatelessWidget {
         ),
         shape: StadiumBorder(
           side: BorderSide(
-            color: isActive
-                ? const Color(0xFF0052CC)
-                : const Color(0xFFE2E8F0),
+            color: isActive ? const Color(0xFF0052CC) : const Color(0xFFE2E8F0),
           ),
         ),
       ),
@@ -577,7 +706,9 @@ class _LeadFormState extends State<_LeadForm> {
     _phoneCtrl = TextEditingController(text: existing?['phone'] ?? '');
     _addressCtrl = TextEditingController(text: existing?['address'] ?? '');
     _quantityCtrl = TextEditingController(
-      text: existing?['quantity'] != null ? existing!['quantity'].toString() : '',
+      text: existing?['quantity'] != null
+          ? existing!['quantity'].toString()
+          : '',
     );
     _status = (existing?['status'] ?? 'NEW').toString();
 
@@ -634,11 +765,13 @@ class _LeadFormState extends State<_LeadForm> {
         'quantity': _quantityCtrl.text.trim().isEmpty
             ? null
             : int.tryParse(_quantityCtrl.text.trim()),
-        'amount': (_quantityCtrl.text.trim().isEmpty ||
+        'amount':
+            (_quantityCtrl.text.trim().isEmpty ||
                 _selectedProduct?['price'] == null)
             ? null
             : (int.tryParse(_quantityCtrl.text.trim()) ?? 0) *
-                (double.tryParse(_selectedProduct!['price'].toString()) ?? 0.0),
+                  (double.tryParse(_selectedProduct!['price'].toString()) ??
+                      0.0),
         'status': _status,
         'assignedAgentId': agentId,
       };
@@ -653,9 +786,9 @@ class _LeadFormState extends State<_LeadForm> {
         Navigator.of(context).pop(true);
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save lead')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to save lead')));
     } finally {
       if (mounted) {
         setState(() {
@@ -753,8 +886,11 @@ class _LeadFormState extends State<_LeadForm> {
                               height: 28,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.image_not_supported,
-                                      size: 20, color: Colors.grey),
+                                  const Icon(
+                                    Icons.image_not_supported,
+                                    size: 20,
+                                    color: Colors.grey,
+                                  ),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -789,9 +925,7 @@ class _LeadFormState extends State<_LeadForm> {
           ),
           if (_selectedProduct != null &&
               (_selectedProduct!['description'] != null &&
-                  _selectedProduct!['description']
-                      .toString()
-                      .isNotEmpty)) ...[
+                  _selectedProduct!['description'].toString().isNotEmpty)) ...[
             const SizedBox(height: 6),
             Text(
               _selectedProduct!['description'].toString(),
@@ -823,15 +957,25 @@ class _LeadFormState extends State<_LeadForm> {
                   items: const [
                     DropdownMenuItem(value: 'NEW', child: Text('NEW')),
                     DropdownMenuItem(
-                        value: 'CONTACTED', child: Text('CONTACTED')),
+                      value: 'CONTACTED',
+                      child: Text('CONTACTED'),
+                    ),
                     DropdownMenuItem(
-                        value: 'QUALIFIED', child: Text('QUALIFIED')),
+                      value: 'QUALIFIED',
+                      child: Text('QUALIFIED'),
+                    ),
                     DropdownMenuItem(
-                        value: 'PROPOSAL', child: Text('PROPOSAL')),
+                      value: 'PROPOSAL',
+                      child: Text('PROPOSAL'),
+                    ),
                     DropdownMenuItem(
-                        value: 'CLOSED_WON', child: Text('CLOSED_WON')),
+                      value: 'CLOSED_WON',
+                      child: Text('CLOSED_WON'),
+                    ),
                     DropdownMenuItem(
-                        value: 'CLOSED_LOST', child: Text('CLOSED_LOST')),
+                      value: 'CLOSED_LOST',
+                      child: Text('CLOSED_LOST'),
+                    ),
                   ],
                   onChanged: (v) {
                     if (v == null) return;

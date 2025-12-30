@@ -12,7 +12,7 @@ class ApiClient {
   ApiClient._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'http://192.168.1.131:8080/api/v1',
+        baseUrl: 'http://192.168.1.106:8080/api/v1',
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
       ),
@@ -22,10 +22,10 @@ class ApiClient {
   // =============== AUTH ===============
 
   Future<Map<String, dynamic>> agentLogin(String email, String password) async {
-    final res = await dio.post('/auth/agent-login', data: {
-      'username': email,
-      'password': password,
-    });
+    final res = await dio.post(
+      '/auth/agent-login',
+      data: {'username': email, 'password': password},
+    );
     return res.data as Map<String, dynamic>;
   }
 
@@ -38,13 +38,16 @@ class ApiClient {
     double? accuracy,
     double? speed,
   }) async {
-    await dio.post('/location/update', data: {
-      'agentId': agentId,
-      'latitude': lat,
-      'longitude': lng,
-      'accuracy': accuracy,
-      'status': 'ACTIVE',
-    });
+    await dio.post(
+      '/location/update',
+      data: {
+        'agentId': agentId,
+        'latitude': lat,
+        'longitude': lng,
+        'accuracy': accuracy,
+        'status': 'ACTIVE',
+      },
+    );
   }
 
   Future<Map<String, dynamic>?> fetchLatestLocationForAgent(
@@ -66,11 +69,7 @@ class ApiClient {
   Future<List<Map<String, dynamic>>> fetchLeadsForAgent(String agentId) async {
     final res = await dio.get(
       '/leads',
-      queryParameters: {
-        'assignedAgentId': agentId,
-        'page': 0,
-        'size': 100,
-      },
+      queryParameters: {'assignedAgentId': agentId, 'page': 0, 'size': 100},
     );
     final data = res.data as Map<String, dynamic>;
     final content = data['content'] as List<dynamic>? ?? [];
@@ -158,20 +157,17 @@ class ApiClient {
         ),
     });
 
-    await dio.post(
-      '/attendance/field/punch-out',
-      data: formData,
-    );
+    await dio.post('/attendance/field/punch-out', data: formData);
   }
 
   Future<List<Map<String, dynamic>>> fetchMonthlyPunchRecords({
     required String agentId,
     required String yearMonth,
   }) async {
-    final res = await dio.get('/attendance/field/records', queryParameters: {
-      'agentId': agentId,
-      'month': yearMonth,
-    });
+    final res = await dio.get(
+      '/attendance/field/records',
+      queryParameters: {'agentId': agentId, 'month': yearMonth},
+    );
     final data = res.data as List<dynamic>? ?? [];
     return data.cast<Map<String, dynamic>>();
   }
@@ -203,14 +199,12 @@ class ApiClient {
   // =============== INVOICES ===============
 
   /// List invoices for the current agent (paged).
-  Future<List<Map<String, dynamic>>> fetchInvoicesForAgent(String agentId) async {
+  Future<List<Map<String, dynamic>>> fetchInvoicesForAgent(
+    String agentId,
+  ) async {
     final res = await dio.get(
       '/invoices',
-      queryParameters: {
-        'agentId': agentId,
-        'page': 0,
-        'size': 50,
-      },
+      queryParameters: {'agentId': agentId, 'page': 0, 'size': 50},
     );
 
     final data = res.data as Map<String, dynamic>;
@@ -219,7 +213,9 @@ class ApiClient {
   }
 
   /// Create a new invoice with items and totals.
-  Future<Map<String, dynamic>> createInvoice(Map<String, dynamic> payload) async {
+  Future<Map<String, dynamic>> createInvoice(
+    Map<String, dynamic> payload,
+  ) async {
     final res = await dio.post('/invoices', data: payload);
     return res.data as Map<String, dynamic>;
   }
@@ -232,18 +228,12 @@ class ApiClient {
 
   /// Delete an invoice by id.
   Future<void> deleteInvoice(String id, String actorId) async {
-    await dio.delete(
-      '/invoices/$id',
-      queryParameters: {'actorId': actorId},
-    );
+    await dio.delete('/invoices/$id', queryParameters: {'actorId': actorId});
   }
 
   /// Mark an invoice as PAID.
   Future<void> markInvoicePaid(String id, String actorId) async {
-    await dio.post(
-      '/invoices/$id/pay',
-      queryParameters: {'actorId': actorId},
-    );
+    await dio.post('/invoices/$id/pay', queryParameters: {'actorId': actorId});
   }
 
   // =============== ACTIVITIES ===============
@@ -253,18 +243,16 @@ class ApiClient {
   ) async {
     final res = await dio.get(
       '/activities',
-      queryParameters: {
-        'agentId': agentId,
-        'page': 0,
-        'size': 100,
-      },
+      queryParameters: {'agentId': agentId, 'page': 0, 'size': 100},
     );
     final data = res.data as Map<String, dynamic>;
     final content = data['content'] as List<dynamic>? ?? [];
     return content.cast<Map<String, dynamic>>();
   }
 
-  Future<Map<String, dynamic>> createActivity(Map<String, dynamic> payload) async {
+  Future<Map<String, dynamic>> createActivity(
+    Map<String, dynamic> payload,
+  ) async {
     final res = await dio.post('/activities', data: payload);
     return res.data as Map<String, dynamic>;
   }
