@@ -1190,7 +1190,7 @@ class _InvoicePageState extends State<InvoicePage> {
     required String fileName,
   }) async {
     final uri = Uri.parse(
-      'http://192.168.1.109:8089/api/v1/invoices/$invoiceId/pdf',
+      'https://api.candorwatertech.com/api/v1/invoices/$invoiceId/pdf',
     );
 
     final request = http.MultipartRequest('POST', uri);

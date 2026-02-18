@@ -11,6 +11,6 @@ class AppConfig {
   /// API base URL, overridable via --dart-define=API_BASE_URL=...
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://192.168.1.109:8089/api/v1',
+    defaultValue: 'https://api.candorwatertech.com/api/v1',
   );
 }
