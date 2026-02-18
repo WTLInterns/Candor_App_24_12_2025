@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_error.dart';
+import '../core/app_snackbar.dart';
+import '../models/invoice.dart';
 import '../providers/session_provider.dart';
 import '../services/api_client.dart';
 import 'invoice_detail_screen.dart';
@@ -16,7 +19,11 @@ class InvoicesScreen extends StatefulWidget {
 class _InvoicesScreenState extends State<InvoicesScreen> {
   bool _loading = false;
   String? _error;
-  List<Map<String, dynamic>> _invoices = [];
+  List<Invoice> _invoices = [];
+  int _page = 0;
+  final int _pageSize = 20;
+  bool _hasMore = true;
+  bool _loadingMore = false;
 
   @override
   void initState() {
@@ -24,27 +31,86 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
     _load();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _load({bool loadMore = false}) async {
+    if (loadMore && (!_hasMore || _loadingMore || _loading)) {
+      return;
+    }
+
+    final nextPage = loadMore ? _page + 1 : 0;
+
+    if (!loadMore) {
+      setState(() {
+        _loading = true;
+        _error = null;
+        _hasMore = true;
+        _page = 0;
+        _invoices = [];
+      });
+    } else {
+      setState(() {
+        _loadingMore = true;
+      });
+    }
     try {
       final session = context.read<SessionProvider>();
-      final agentId = session.agentId!;
-      // expects ApiClient().fetchInvoicesForAgent(agentId)
-      final data = await ApiClient().fetchInvoicesForAgent(agentId);
+      final agentId = session.agentId;
+      if (agentId == null) {
+        if (mounted) {
+          AppSnackbar.showError(
+            context,
+            'Session expired. Please login again.',
+          );
+        }
+        setState(() {
+          _invoices = [];
+          _error = 'Session expired. Please login again.';
+          _hasMore = false;
+          _loading = false;
+          _loadingMore = false;
+        });
+        return;
+      }
+
+      final data = await ApiClient().fetchInvoicesForAgentTyped(
+        agentId,
+        page: nextPage,
+        size: _pageSize,
+      );
       setState(() {
-        _invoices = data;
+        if (loadMore) {
+          _invoices = [..._invoices, ...data];
+        } else {
+          _invoices = data;
+        }
+        _page = nextPage;
+        if (data.length < _pageSize) {
+          _hasMore = false;
+        }
       });
-    } catch (e) {
+    } on AppError catch (e) {
+      if (mounted) {
+        AppSnackbar.showError(context, e.message);
+      }
+      setState(() {
+        _error = e.message;
+        _hasMore = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.showError(
+          context,
+          'Failed to load invoices. Please try again.',
+        );
+      }
       setState(() {
         _error = 'Failed to load invoices';
+        _hasMore = false;
       });
     } finally {
       if (mounted) {
         setState(() {
           _loading = false;
+          _loadingMore = false;
         });
       }
     }
@@ -69,7 +135,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
         ),
         child: SafeArea(
           child: RefreshIndicator(
-            onRefresh: _load,
+            onRefresh: () => _load(),
             child: Center(
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -106,8 +172,7 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                           padding: const EdgeInsets.all(16),
                           child: Text(
                             _error!,
-                            style:
-                                const TextStyle(color: Colors.redAccent),
+                            style: const TextStyle(color: Colors.redAccent),
                           ),
                         )
                       else if (_invoices.isEmpty)
@@ -124,85 +189,105 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
                         ListView.separated(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _invoices.length,
+                          itemCount: _invoices.length + (_hasMore ? 1 : 0),
                           padding: const EdgeInsets.only(top: 8),
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 8),
                           itemBuilder: (context, index) {
-                          final inv = _invoices[index];
-                          final invoiceNo = inv['invoiceNo']?.toString() ?? '-';
-                          final total = (inv['total'] ?? 0).toString();
-                          final status = inv['status']?.toString() ?? 'DRAFT';
-                          final createdAt = inv['createdAt']?.toString();
-
-                          Color statusColor;
-                          switch (status) {
-                            case 'PAID':
-                              statusColor = const Color(0xFF22C55E);
-                              break;
-                            case 'SENT':
-                              statusColor = const Color(0xFF2F80ED);
-                              break;
-                            case 'CANCELLED':
-                              statusColor = const Color(0xFFEF4444);
-                              break;
-                            default:
-                              statusColor = const Color(0xFFFACC15);
-                          }
-
-                          return Card(
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: ListTile(
-                              onTap: () async {
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => InvoiceDetailScreen(invoiceId: inv['id'] as String),
-                                  ),
-                                );
-                                _load();
-                              },
-                              title: Text(
-                                invoiceNo,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
+                            if (_hasMore && index == _invoices.length) {
+                              if (!_loadingMore) {
+                                _load(loadMore: true);
+                              }
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(),
                                 ),
+                              );
+                            }
+                            final inv = _invoices[index];
+                            final invoiceNo = inv.invoiceNo;
+                            final total = inv.total.toString();
+                            final status = inv.status;
+                            final createdAt = inv.createdAt.toString();
+
+                            Color statusColor;
+                            switch (status) {
+                              case 'PAID':
+                                statusColor = const Color(0xFF22C55E);
+                                break;
+                              case 'SENT':
+                                statusColor = const Color(0xFF2F80ED);
+                                break;
+                              case 'CANCELLED':
+                                statusColor = const Color(0xFFEF4444);
+                                break;
+                              default:
+                                statusColor = const Color(0xFFFACC15);
+                            }
+
+                            return Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 2),
-                                  Text('Total: ₹$total'),
-                                  if (createdAt != null)
-                                    Text(
-                                      createdAt,
-                                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                              child: ListTile(
+                                onTap: () async {
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => InvoiceDetailScreen(
+                                        invoiceId: inv.id ?? '',
+                                      ),
                                     ),
-                                ],
-                              ),
-                              trailing: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(999),
-                                  border: Border.all(color: statusColor.withOpacity(0.7)),
+                                  );
+                                  _load();
+                                },
+                                title: Text(
+                                  invoiceNo,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                                child: Text(
-                                  status,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                    color: statusColor,
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 2),
+                                    Text('Total: ₹$total'),
+                                    if (createdAt != null)
+                                      Text(
+                                        createdAt,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                trailing: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: statusColor.withOpacity(0.7),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    status,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: statusColor,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        ),
                     ],
                   ),
                 ),
@@ -213,9 +298,9 @@ class _InvoicesScreenState extends State<InvoicesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const InvoicePage()),
-          );
+          await Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const InvoicePage()));
           // After returning, refresh the list in case a new invoice was created
           _load();
         },

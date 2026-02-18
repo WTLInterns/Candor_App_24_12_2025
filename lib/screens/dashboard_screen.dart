@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:geocoding/geocoding.dart';
 
+import '../core/app_error.dart';
+import '../core/app_snackbar.dart';
+import '../models/lead.dart';
 import '../providers/session_provider.dart';
 import '../services/api_client.dart';
 import 'activity_log_screen.dart';
@@ -29,7 +32,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   double? _locationLat;
   double? _locationLng;
   Timer? _locationTimer;
-  List<Map<String, dynamic>> _allLeads = [];
+  List<Lead> _allLeads = [];
   List<String> _availableMonths = [];
   String? _selectedMonth;
   late AnimationController _animationController;
@@ -75,7 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     setState(() => _loadingLeads = true);
     try {
-      final leads = await ApiClient().fetchLeadsForAgent(agentId);
+      final leads = await ApiClient().fetchLeadsForAgentTyped(agentId);
       if (!mounted) return;
 
       _allLeads = leads;
@@ -94,8 +97,16 @@ class _DashboardScreenState extends State<DashboardScreen>
       _recomputeLeadStatsForSelectedMonth();
 
       setState(() => _leadCount = leads.length);
+    } on AppError catch (e) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, e.message);
+      setState(() => _leadCount = null);
     } catch (_) {
       if (!mounted) return;
+      AppSnackbar.showError(
+        context,
+        'Failed to load leads summary. Pull to refresh later.',
+      );
       setState(() => _leadCount = null);
     } finally {
       if (mounted) setState(() => _loadingLeads = false);
@@ -115,15 +126,12 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     for (final lead in _allLeads) {
-      final createdRaw = lead['createdAt']?.toString();
-      if (createdRaw == null) continue;
-      final created = DateTime.tryParse(createdRaw);
-      if (created == null) continue;
+      final created = lead.createdAt;
       final ym =
           '${created.year.toString().padLeft(4, '0')}-${created.month.toString().padLeft(2, '0')}';
       if (ym != _selectedMonth) continue;
 
-      final status = (lead['status'] ?? 'NEW').toString();
+      final status = lead.status;
       if (status == 'CLOSED_WON' || status == 'COMPLETED') {
         won++;
       } else {
@@ -215,6 +223,25 @@ class _DashboardScreenState extends State<DashboardScreen>
         _locationLat = lat;
         _locationLng = lng;
         _locationAddress = address;
+      });
+    } on AppError catch (e) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, e.message);
+      setState(() {
+        _locationAddress = null;
+        _locationLat = null;
+        _locationLng = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.showError(
+        context,
+        'Failed to load live location. Please check your network.',
+      );
+      setState(() {
+        _locationAddress = null;
+        _locationLat = null;
+        _locationLng = null;
       });
     } finally {
       if (mounted) setState(() => _loadingLocation = false);

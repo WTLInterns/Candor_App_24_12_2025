@@ -1,14 +1,48 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'core/app_logger.dart';
 import 'providers/session_provider.dart';
 import 'services/session_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_shell.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const FieldForceProApp());
+  runZonedGuarded<Future<void>>(
+    () async {
+      // ✅ Binding SAME zone मध्ये
+      WidgetsFlutterBinding.ensureInitialized();
+
+      // ✅ Flutter framework errors capture
+      FlutterError.onError = (FlutterErrorDetails details) {
+        AppLogger.error(
+          'Flutter framework error',
+          error: details.exception,
+          stackTrace: details.stack,
+          name: 'FlutterError',
+        );
+
+        FlutterError.presentError(details);
+      };
+
+      // 👉 Future async init असेल तर इथे करू शकतोस
+      // await initializeService();
+      // await Firebase.initializeApp();
+
+      runApp(const FieldForceProApp());
+    },
+    (Object error, StackTrace stack) {
+      // ✅ Zone uncaught errors
+      AppLogger.error(
+        'Uncaught zone error',
+        error: error,
+        stackTrace: stack,
+        name: 'Zone',
+      );
+    },
+  );
 }
 
 class FieldForceProApp extends StatelessWidget {
@@ -21,9 +55,9 @@ class FieldForceProApp extends StatelessWidget {
       child: Builder(
         builder: (context) {
           final baseColorScheme = const ColorScheme.light(
-            primary: Color(0xFF0052CC), // Royal Blue
-            secondary: Color(0xFF0A1F44), // Deep Navy
-            background: Color(0xFFF5F7FA), // Light background
+            primary: Color(0xFF0052CC),
+            secondary: Color(0xFF0A1F44),
+            background: Color(0xFFF5F7FA),
             surface: Colors.white,
             onPrimary: Colors.white,
             onSecondary: Colors.white,
@@ -39,6 +73,7 @@ class FieldForceProApp extends StatelessWidget {
             scaffoldBackgroundColor: const Color(0xFFF5F7FA),
             canvasColor: const Color(0xFFF5F7FA),
             fontFamily: 'Poppins',
+
             textTheme: const TextTheme(
               headlineSmall: TextStyle(
                 fontSize: 24,
@@ -50,21 +85,17 @@ class FieldForceProApp extends StatelessWidget {
                 fontWeight: FontWeight.w500,
                 color: Color(0xFF0D1B2A),
               ),
-              bodyMedium: TextStyle(
-                fontSize: 16,
-                color: Color(0xFF4A5568),
-              ),
-              bodySmall: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF4A5568),
-              ),
+              bodyMedium: TextStyle(fontSize: 16, color: Color(0xFF4A5568)),
+              bodySmall: TextStyle(fontSize: 14, color: Color(0xFF4A5568)),
             ),
+
             appBarTheme: const AppBarTheme(
               backgroundColor: Colors.white,
               foregroundColor: Color(0xFF0D1B2A),
               elevation: 0.5,
               centerTitle: false,
             ),
+
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
                 elevation: 0,
@@ -73,19 +104,23 @@ class FieldForceProApp extends StatelessWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
                 textStyle: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
+
             floatingActionButtonTheme: const FloatingActionButtonThemeData(
               backgroundColor: Color(0xFF0052CC),
               foregroundColor: Colors.white,
               elevation: 6,
             ),
+
             inputDecorationTheme: InputDecorationTheme(
               filled: true,
               fillColor: Colors.white,
@@ -99,11 +134,17 @@ class FieldForceProApp extends StatelessWidget {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: Color(0xFF0052CC), width: 1.4),
+                borderSide: const BorderSide(
+                  color: Color(0xFF0052CC),
+                  width: 1.4,
+                ),
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
+
             chipTheme: ChipThemeData(
               backgroundColor: const Color(0xFFE5EDFF),
               selectedColor: const Color(0xFF0052CC),
@@ -117,9 +158,7 @@ class FieldForceProApp extends StatelessWidget {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               shape: StadiumBorder(
-                side: BorderSide(
-                  color: Colors.blue.shade100,
-                ),
+                side: BorderSide(color: Colors.blue.shade100),
               ),
             ),
           );

@@ -1,4 +1,4 @@
-package com.example.fieldforcepro_tracker
+package com.candorwatertech.fieldforceprotracker
 
 import io.flutter.embedding.android.FlutterActivity
 

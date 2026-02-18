@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_error.dart';
+import '../core/app_snackbar.dart';
+import '../models/invoice.dart';
 import '../services/api_client.dart';
 
 class InvoiceDetailScreen extends StatefulWidget {
@@ -12,8 +15,8 @@ class InvoiceDetailScreen extends StatefulWidget {
 
 class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   Map<String, dynamic>? _invoice;
-  List<dynamic> _items = [];
-  List<dynamic> _audit = [];
+  List<InvoiceItem> _items = [];
+  List<InvoiceAuditEntry> _audit = [];
   bool _loading = false;
   String? _error;
 
@@ -32,10 +35,36 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
       final data = await ApiClient().fetchInvoiceDetail(widget.invoiceId);
       setState(() {
         _invoice = data['invoice'] as Map<String, dynamic>?;
-        _items = (data['items'] as List<dynamic>? ?? []);
-        _audit = (data['audit'] as List<dynamic>? ?? []);
+        final rawItems = data['items'];
+        final rawAudit = data['audit'];
+
+        _items = rawItems is List
+            ? rawItems
+                  .whereType<Map<String, dynamic>>()
+                  .map(InvoiceItem.fromJson)
+                  .toList()
+            : <InvoiceItem>[];
+        _audit = rawAudit is List
+            ? rawAudit
+                  .whereType<Map<String, dynamic>>()
+                  .map(InvoiceAuditEntry.fromJson)
+                  .toList()
+            : <InvoiceAuditEntry>[];
       });
-    } catch (e) {
+    } on AppError catch (e) {
+      if (mounted) {
+        AppSnackbar.showError(context, e.message);
+      }
+      setState(() {
+        _error = e.message;
+      });
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.showError(
+          context,
+          'Failed to load invoice. Please try again.',
+        );
+      }
       setState(() {
         _error = 'Failed to load invoice';
       });
@@ -51,125 +80,121 @@ class _InvoiceDetailScreenState extends State<InvoiceDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Invoice Detail'),
-      ),
+      appBar: AppBar(title: const Text('Invoice Detail')),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Text(
-                    _error!,
-                    style: const TextStyle(color: Colors.redAccent),
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  _error!,
+                  style: const TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            )
+          : _invoice == null
+          ? const Center(child: Text('Invoice not found'))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _invoice!['invoiceNo']?.toString() ?? '-',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ))
-              : _invoice == null
-                  ? const Center(child: Text('Invoice not found'))
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
+                  const SizedBox(height: 4),
+                  Text('Status: ${_invoice!['status']}'),
+                  const SizedBox(height: 4),
+                  Text('Total: ₹${_invoice!['total'] ?? 0}'),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const Text(
+                            'Customer Snapshot',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
                           Text(
-                            _invoice!['invoiceNo']?.toString() ?? '-',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            _invoice!['customerSnapshotJson']?.toString() ??
+                                '-',
+                            style: const TextStyle(fontSize: 12),
                           ),
-                          const SizedBox(height: 4),
-                          Text('Status: ${_invoice!['status']}'),
-                          const SizedBox(height: 4),
-                          Text('Total: ₹${_invoice!['total'] ?? 0}'),
-                          const SizedBox(height: 16),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Customer Snapshot',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _invoice!['customerSnapshotJson']?.toString() ??
-                                        '-',
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Items',
+                            style: TextStyle(fontWeight: FontWeight.w600),
                           ),
-                          const SizedBox(height: 16),
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Items',
-                                    style: TextStyle(fontWeight: FontWeight.w600),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (_items.isEmpty)
-                                    const Text('No items')
-                                  else
-                                    Column(
-                                      children: _items
-                                          .map(
-                                            (i) => ListTile(
-                                              title: Text(
-                                                  i['name']?.toString() ?? '-'),
-                                              subtitle: Text(
-                                                  'Qty: ${i['quantity']} • ₹${i['unitPrice']}'),
-                                              trailing: Text(
-                                                  '₹${i['lineTotal'] ?? 0}'),
-                                            ),
-                                          )
-                                          .toList(),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          if (_audit.isNotEmpty)
-                            Card(
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Audit',
-                                      style:
-                                          TextStyle(fontWeight: FontWeight.w600),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    ..._audit.map(
-                                      (a) => Padding(
-                                        padding:
-                                            const EdgeInsets.symmetric(
-                                                vertical: 2),
-                                        child: Text(
-                                          '${a['action']} by ${a['actorId']} at ${a['createdAt']} - ${a['details'] ?? ''}',
-                                          style:
-                                              const TextStyle(fontSize: 11),
-                                        ),
+                          const SizedBox(height: 8),
+                          if (_items.isEmpty)
+                            const Text('No items')
+                          else
+                            Column(
+                              children: _items
+                                  .map(
+                                    (i) => ListTile(
+                                      title: Text(i.name),
+                                      subtitle: Text(
+                                        'Qty: ${i.quantity} • ₹${i.unitPrice}',
                                       ),
+                                      trailing: Text('₹${i.lineTotal}'),
                                     ),
-                                  ],
-                                ),
-                              ),
+                                  )
+                                  .toList(),
                             ),
                         ],
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_audit.isNotEmpty)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Audit',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 8),
+                            ..._audit.map(
+                              (a) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 2,
+                                ),
+                                child: Text(
+                                  '${a.action} by ${a.actorId} at ${a.createdAt} - ${a.details ?? ''}',
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
     );
   }
 }

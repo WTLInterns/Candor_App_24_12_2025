@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/app_error.dart';
+import '../core/app_snackbar.dart';
 import '../services/api_client.dart';
 
 class InvoiceDraftData {
@@ -105,14 +107,16 @@ class _InvoiceReviewScreenState extends State<InvoiceReviewScreen> {
 
       await ApiClient().createInvoice(payload);
       if (mounted) {
+        AppSnackbar.showSuccess(context, 'Invoice created successfully');
         Navigator.of(context).pop(true); // pop review
         Navigator.of(context).pop(true); // pop form
       }
-    } catch (e) {
+    } on AppError catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save invoice')),
-      );
+      AppSnackbar.showError(context, e.message);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, 'Failed to save invoice');
     } finally {
       if (mounted) {
         setState(() {
@@ -174,11 +178,16 @@ class _InvoiceReviewScreenState extends State<InvoiceReviewScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(d.customerName.isEmpty ? '-' : d.customerName,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600)),
+                            Text(
+                              d.customerName.isEmpty ? '-' : d.customerName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                             const SizedBox(height: 4),
-                            Text(d.customerPhone.isEmpty ? '-' : d.customerPhone),
+                            Text(
+                              d.customerPhone.isEmpty ? '-' : d.customerPhone,
+                            ),
                           ],
                         ),
                       ),
@@ -192,16 +201,16 @@ class _InvoiceReviewScreenState extends State<InvoiceReviewScreen> {
                     Card(
                       child: Column(
                         children: [
-                          const ListTile(
-                            title: Text('Products'),
-                          ),
+                          const ListTile(title: Text('Products')),
                           ...d.items.map(
                             (i) => ListTile(
                               title: Text(i.name),
                               subtitle: Text(
-                                  'Qty: ${i.quantity} • ₹${i.unitPrice.toStringAsFixed(2)} • Disc: ${i.discountPct.toStringAsFixed(1)}% • Tax: ${i.taxPct.toStringAsFixed(1)}%'),
-                              trailing:
-                                  Text('₹${i.lineTotal.toStringAsFixed(2)}'),
+                                'Qty: ${i.quantity} • ₹${i.unitPrice.toStringAsFixed(2)} • Disc: ${i.discountPct.toStringAsFixed(1)}% • Tax: ${i.taxPct.toStringAsFixed(1)}%',
+                              ),
+                              trailing: Text(
+                                '₹${i.lineTotal.toStringAsFixed(2)}',
+                              ),
                             ),
                           ),
                         ],
@@ -233,8 +242,9 @@ class _InvoiceReviewScreenState extends State<InvoiceReviewScreen> {
                             ? const SizedBox(
                                 width: 18,
                                 height: 18,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('Confirm & Save Invoice'),
                       ),

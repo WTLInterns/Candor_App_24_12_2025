@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_error.dart';
+import '../core/app_snackbar.dart';
+import '../models/activity.dart';
 import '../providers/session_provider.dart';
 import '../services/api_client.dart';
 
@@ -15,8 +18,12 @@ class ActivityLogScreen extends StatefulWidget {
 class _ActivityLogScreenState extends State<ActivityLogScreen> {
   final _api = ApiClient();
   bool _loading = false;
-  List<Map<String, dynamic>> _activities = [];
+  List<Activity> _activities = [];
   String? _loadMessage;
+  int _page = 0;
+  final int _pageSize = 20;
+  bool _hasMore = true;
+  bool _loadingMore = false;
 
   @override
   void initState() {
@@ -24,51 +31,88 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
     _load();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool loadMore = false}) async {
     final session = context.read<SessionProvider>();
     if (session.agentId == null) return;
-    setState(() {
-      _loading = true;
-      _loadMessage = null;
-    });
-    try {
-      final data = await _api.fetchActivitiesForAgent(session.agentId!);
+    if (loadMore && (!_hasMore || _loadingMore || _loading)) {
+      return;
+    }
+
+    final nextPage = loadMore ? _page + 1 : 0;
+
+    if (!loadMore) {
       setState(() {
-        _activities = data;
+        _loading = true;
+        _loadMessage = null;
+        _hasMore = true;
+        _page = 0;
+        _activities = [];
+      });
+    } else {
+      setState(() {
+        _loadingMore = true;
+      });
+    }
+    try {
+      final data = await _api.fetchActivitiesForAgentTyped(
+        session.agentId!,
+        page: nextPage,
+        size: _pageSize,
+      );
+      setState(() {
+        if (loadMore) {
+          _activities = [..._activities, ...data];
+        } else {
+          _activities = data;
+        }
+        _page = nextPage;
         if (_activities.isEmpty) {
           _loadMessage =
               'No activities yet. Tap "Add Activity" to create your first activity.';
         }
+        if (data.length < _pageSize) {
+          _hasMore = false;
+        }
       });
-    } catch (_) {
+    } on AppError catch (e) {
       if (!mounted) return;
+      AppSnackbar.showError(context, e.message);
       setState(() {
-        // Treat errors as an empty, refreshable state instead of a red error.
         _activities = [];
         _loadMessage =
             'Could not load activities. Pull down to refresh or add a new activity.';
+        _hasMore = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.showError(
+        context,
+        'Failed to load activities. Please try again.',
+      );
+      setState(() {
+        _activities = [];
+        _loadMessage =
+            'Could not load activities. Pull down to refresh or add a new activity.';
+        _hasMore = false;
       });
     } finally {
       if (mounted) {
         setState(() {
           _loading = false;
+          _loadingMore = false;
         });
       }
     }
   }
 
-  Future<void> _openAddOrEdit({Map<String, dynamic>? existing}) async {
+  Future<void> _openAddOrEdit({Activity? existing}) async {
     final session = context.read<SessionProvider>();
     if (session.agentId == null) return;
 
     final formKey = GlobalKey<FormState>();
-    String customerName =
-        existing?['customer'] as String? ??
-        existing?['customerName'] as String? ??
-        '';
-    String activity = existing?['activity'] as String? ?? '';
-    String status = (existing?['status'] as String? ?? 'IN_PROGRESS')
-        .toUpperCase();
+    String customerName = existing?.customerName ?? '';
+    String activity = existing?.activity ?? '';
+    String status = (existing?.status ?? 'IN_PROGRESS').toUpperCase();
 
     final result = await showDialog<bool>(
       context: context,
@@ -144,18 +188,19 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                       'status': status,
                     });
                   } else {
-                    await _api.updateActivity(existing['id'] as String, {
+                    await _api.updateActivity(existing.id ?? '', {
                       'customerName': customerName,
                       'activity': activity,
                       'status': status,
                     });
                   }
                   if (ctx.mounted) Navigator.of(ctx).pop(true);
+                } on AppError catch (e) {
+                  if (!ctx.mounted) return;
+                  AppSnackbar.showError(ctx, e.message);
                 } catch (_) {
                   if (!ctx.mounted) return;
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(content: Text('Failed to save activity')),
-                  );
+                  AppSnackbar.showError(ctx, 'Failed to save activity');
                 }
               },
               child: const Text('Save'),
@@ -189,8 +234,19 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
       ),
     );
     if (ok != true) return;
-    await _api.deleteActivity(id);
-    await _load();
+    try {
+      await _api.deleteActivity(id);
+      if (mounted) {
+        AppSnackbar.showSuccess(context, 'Activity deleted');
+      }
+      await _load();
+    } on AppError catch (e) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, e.message);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, 'Failed to delete activity');
+    }
   }
 
   @override
@@ -245,7 +301,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                   ],
                 ),
                 child: RefreshIndicator(
-                  onRefresh: _load,
+                  onRefresh: () => _load(),
                   child: _loading && _activities.isEmpty
                       ? const Center(child: CircularProgressIndicator())
                       : _activities.isEmpty
@@ -297,20 +353,26 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                         )
                       : ListView.separated(
                           padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemCount: _activities.length,
+                          itemCount: _activities.length + (_hasMore ? 1 : 0),
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 12),
                           itemBuilder: (ctx, index) {
+                            if (_hasMore && index == _activities.length) {
+                              if (!_loadingMore) {
+                                _load(loadMore: true);
+                              }
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
                             final a = _activities[index];
-                            final time = a['time'] as String? ?? '';
-                            final customer =
-                                a['customer'] as String? ??
-                                a['customerName'] as String? ??
-                                '-';
-                            final activity = a['activity'] as String? ?? '';
-                            final status =
-                                (a['status'] as String? ?? 'IN_PROGRESS')
-                                    .toUpperCase();
+                            final time = a.time;
+                            final customer = a.customerName ?? '-';
+                            final activity = a.activity;
+                            final status = a.status.toUpperCase();
 
                             Color statusColor;
                             IconData statusIcon;
@@ -453,8 +515,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
                                           size: 18,
                                         ),
                                         color: const Color(0xFFDC2626),
-                                        onPressed: () =>
-                                            _delete(a['id'] as String),
+                                        onPressed: () => _delete(a.id ?? ''),
                                         padding: EdgeInsets.zero,
                                         constraints: const BoxConstraints(
                                           minWidth: 32,

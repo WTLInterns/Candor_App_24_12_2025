@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_error.dart';
+import '../core/app_snackbar.dart';
 import '../providers/session_provider.dart';
 import '../services/api_client.dart';
 import 'main_shell.dart';
@@ -19,37 +21,55 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _error;
 
   Future<void> _login() async {
+    final username = _emailCtrl.text.trim();
+    final password = _passCtrl.text.trim();
+
+    if (username.isEmpty || password.isEmpty) {
+      setState(() {
+        _error = 'Email/username and password are required.';
+      });
+      return;
+    }
+
     setState(() {
       _loading = true;
       _error = null;
     });
 
     try {
-      final username = _emailCtrl.text.trim();
-      final data =
-          await ApiClient().agentLogin(username, _passCtrl.text.trim());
-      // TEMP: debug log for login payload
-      // ignore: avoid_print
-      print('agentLogin response: ' + data.toString());
+      final data = await ApiClient().agentLogin(username, password);
 
-      final agentId = data['agentId'] as String;
-      final name = data['name'] as String;
+      final agentId = data['agentId']?.toString() ?? '0';
+      final name = data['name']?.toString() ?? '';
       final code = data['employeeCode'] as int?;
-      final email = data['email'] as String?;
-      final phone = data['mobile'] as String? ?? username;
+      final email = data['email']?.toString() ?? '';
+      final phone = data['mobile']?.toString() ?? username;
 
-      await context
-          .read<SessionProvider>()
-          .setSession(agentId, name, code, email, phone);
+      await context.read<SessionProvider>().setSession(
+        agentId,
+        name,
+        code,
+        email,
+        phone,
+      );
 
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const MainShell()),
-      );
-    } catch (e) {
+      AppSnackbar.showSuccess(context, 'Login successful');
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const MainShell()));
+    } on AppError catch (e) {
+      if (!mounted) return;
       setState(() {
-        _error = 'Login failed. Check mobile & password.';
+        _error = e.message;
       });
+      AppSnackbar.showError(context, e.message);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'Login failed. Please try again.';
+      });
+      AppSnackbar.showError(context, 'Login failed. Please try again.');
     } finally {
       if (mounted) {
         setState(() => _loading = false);
@@ -173,15 +193,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF0364D5), Color(0xFF4FA0FF)],
+                                      colors: [
+                                        Color(0xFF0364D5),
+                                        Color(0xFF4FA0FF),
+                                      ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(30),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFF0364D5)
-                                            .withOpacity(0.6),
+                                        color: const Color(
+                                          0xFF0364D5,
+                                        ).withOpacity(0.6),
                                         blurRadius: 20,
                                         offset: const Offset(0, 8),
                                       ),
@@ -256,8 +280,10 @@ class _GlassTextField extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: Color(0xFFEEDCFF), width: 1.4),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
       ),
     );
   }
@@ -284,8 +310,11 @@ class _GlassPasswordFieldState extends State<_GlassPasswordField> {
       decoration: InputDecoration(
         hintText: '••••••••',
         hintStyle: const TextStyle(color: Colors.white),
-        prefixIcon:
-            const Icon(Icons.lock_outline, color: Color(0xFFEEDCFF), size: 20),
+        prefixIcon: const Icon(
+          Icons.lock_outline,
+          color: Color(0xFFEEDCFF),
+          size: 20,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
             _obscure ? Icons.visibility_off : Icons.visibility,
@@ -308,8 +337,10 @@ class _GlassPasswordFieldState extends State<_GlassPasswordField> {
           borderRadius: BorderRadius.all(Radius.circular(18)),
           borderSide: BorderSide(color: Color(0xFFEEDCFF), width: 1.4),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
       ),
     );
   }

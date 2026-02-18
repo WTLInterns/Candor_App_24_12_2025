@@ -1,44 +1,16 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_error.dart';
+import '../core/app_snackbar.dart';
+import '../models/lead.dart';
 import '../providers/session_provider.dart';
 import '../services/api_client.dart';
 import 'lead_chat_screen.dart';
-
-class Lead {
-  final String? id;
-  final String companyName;
-  final String phone;
-  final String email;
-  final String address;
-  final String product;
-  final int quantity;
-  final double amount;
-  final String status;
-  final String? assignedAgentId;
-  final String? source;
-  final String? notes;
-  final DateTime createdAt;
-
-  Lead({
-    this.id,
-    required this.companyName,
-    required this.phone,
-    required this.email,
-    required this.address,
-    required this.product,
-    required this.quantity,
-    required this.amount,
-    required this.status,
-    this.assignedAgentId,
-    this.source,
-    this.notes,
-    required this.createdAt,
-  });
-}
 
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({super.key});
@@ -49,9 +21,14 @@ class LeadsScreen extends StatefulWidget {
 
 class _LeadsScreenState extends State<LeadsScreen> {
   bool _loading = false;
-  List<Map<String, dynamic>> _leads = [];
+  List<Lead> _leads = [];
   String _search = '';
   String _statusFilter = 'ALL';
+  int _page = 0;
+  final int _pageSize = 20;
+  bool _hasMore = true;
+  bool _loadingMore = false;
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -59,33 +36,90 @@ class _LeadsScreenState extends State<LeadsScreen> {
     _loadLeads();
   }
 
-  Future<void> _loadLeads() async {
-    setState(() {
-      _loading = true;
-    });
+  Future<void> _loadLeads({bool loadMore = false}) async {
+    if (loadMore && (!_hasMore || _loadingMore || _loading)) {
+      return;
+    }
+
+    final nextPage = loadMore ? _page + 1 : 0;
+
+    if (!loadMore) {
+      setState(() {
+        _loading = true;
+        _hasMore = true;
+        _page = 0;
+        _leads = [];
+      });
+    } else {
+      setState(() {
+        _loadingMore = true;
+      });
+    }
     try {
       final session = context.read<SessionProvider>();
-      final agentId = session.agentId!;
-      final leads = await ApiClient().fetchLeadsForAgent(agentId);
+      final agentId = session.agentId;
+      if (agentId == null) {
+        if (mounted) {
+          AppSnackbar.showError(
+            context,
+            'Session expired. Please login again.',
+          );
+        }
+        setState(() {
+          _leads = [];
+          _hasMore = false;
+          _loading = false;
+          _loadingMore = false;
+        });
+        return;
+      }
+
+      final typedLeads = await ApiClient().fetchLeadsForAgentTyped(
+        agentId,
+        page: nextPage,
+        size: _pageSize,
+      );
       setState(() {
-        _leads = leads;
+        if (loadMore) {
+          _leads = [..._leads, ...typedLeads];
+        } else {
+          _leads = typedLeads;
+        }
+        _page = nextPage;
+        if (typedLeads.length < _pageSize) {
+          _hasMore = false;
+        }
       });
-    } catch (e) {
-      // On error, keep leads empty and allow pull-to-refresh; UI will show the
-      // calm empty state message instead of a red error.
+    } on AppError catch (e) {
+      if (mounted) {
+        AppSnackbar.showError(context, e.message);
+      }
       setState(() {
         _leads = [];
+        _hasMore = false;
+      });
+    } catch (_) {
+      if (mounted) {
+        AppSnackbar.showError(
+          context,
+          'Failed to load leads. Please try again.',
+        );
+      }
+      setState(() {
+        _leads = [];
+        _hasMore = false;
       });
     } finally {
       if (mounted) {
         setState(() {
           _loading = false;
+          _loadingMore = false;
         });
       }
     }
   }
 
-  Future<void> _openLeadForm({Map<String, dynamic>? existing}) async {
+  Future<void> _openLeadForm({Lead? existing}) async {
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -113,7 +147,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         maxWidth: 520,
                         maxHeight: MediaQuery.of(ctx).size.height * 0.9,
                       ),
-                      child: _LeadFormWrapper(existing: existing),
+                      child: _LeadFormWrapper(
+                        existing: existing != null ? existing.toJson() : null,
+                      ),
                     ),
                   ),
                 ),
@@ -128,8 +164,8 @@ class _LeadsScreenState extends State<LeadsScreen> {
     }
   }
 
-  Future<void> _openChat(Map<String, dynamic> lead) async {
-    final id = lead['id'] as String?;
+  Future<void> _openChat(Lead lead) async {
+    final id = lead.id;
     if (id == null) return;
 
     await showModalBottomSheet<void>(
@@ -164,7 +200,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           color: Colors.white,
                           child: LeadChatScreen(
                             leadId: id,
-                            title: lead['companyName']?.toString() ?? '-',
+                            title: lead.companyName,
                           ),
                         ),
                       ),
@@ -182,20 +218,25 @@ class _LeadsScreenState extends State<LeadsScreen> {
   Future<void> _deleteLead(String id) async {
     try {
       await ApiClient().deleteLead(id);
+      if (mounted) {
+        AppSnackbar.showSuccess(context, 'Lead deleted');
+      }
       _loadLeads();
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to delete lead')));
+    } on AppError catch (e) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, e.message);
+    } catch (_) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, 'Failed to delete lead');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final visibleLeads = _leads.where((lead) {
-      final name = (lead['companyName'] ?? '').toString().toLowerCase();
-      final product = (lead['product'] ?? '').toString().toLowerCase();
-      final status = (lead['status'] ?? 'NEW').toString();
+      final name = lead.companyName.toLowerCase();
+      final product = lead.product.toLowerCase();
+      final status = lead.status;
       final matchesSearch =
           _search.isEmpty ||
           name.contains(_search.toLowerCase()) ||
@@ -227,7 +268,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
         ),
         child: SafeArea(
           child: RefreshIndicator(
-            onRefresh: _loadLeads,
+            onRefresh: () => _loadLeads(),
             child: Center(
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -286,9 +327,16 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           ),
                         ),
                         onChanged: (value) {
-                          setState(() {
-                            _search = value.trim();
-                          });
+                          _searchDebounce?.cancel();
+                          _searchDebounce = Timer(
+                            const Duration(milliseconds: 350),
+                            () {
+                              if (!mounted) return;
+                              setState(() {
+                                _search = value.trim();
+                              });
+                            },
+                          );
                         },
                       ),
                       const SizedBox(height: 12),
@@ -402,12 +450,24 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         ListView.separated(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: visibleLeads.length,
+                          itemCount: visibleLeads.length + (_hasMore ? 1 : 0),
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
+                            if (_hasMore && index == visibleLeads.length) {
+                              if (!_loadingMore) {
+                                _loadLeads(loadMore: true);
+                              }
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+
                             final lead = visibleLeads[index];
-                            final status = (lead['status'] ?? 'NEW').toString();
+                            final status = lead.status;
 
                             Color statusColor;
                             IconData statusIcon;
@@ -470,9 +530,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                           ),
                                           alignment: Alignment.center,
                                           child: Text(
-                                            ((lead['companyName'] ?? '-')
-                                                    as String)
-                                                .substring(0, 1)
+                                            (lead.companyName.isNotEmpty
+                                                    ? lead.companyName[0]
+                                                    : '-')
                                                 .toUpperCase(),
                                             style: const TextStyle(
                                               color: Colors.white,
@@ -488,7 +548,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                lead['companyName'] ?? '-',
+                                                lead.companyName,
                                                 style: const TextStyle(
                                                   fontWeight: FontWeight.w600,
                                                   fontSize: 15,
@@ -499,7 +559,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                               ),
                                               const SizedBox(height: 3),
                                               Text(
-                                                lead['product'] ?? '-',
+                                                lead.product,
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   color: Color(0xFF64748B),
@@ -564,7 +624,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                               ),
                                               const SizedBox(width: 6),
                                               Text(
-                                                'Qty: ${lead['quantity']?.toString() ?? '-'}',
+                                                'Qty: ${lead.quantity.toString()}',
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   color: Color(0xFF64748B),
@@ -607,7 +667,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                           ),
                                           color: const Color(0xFFDC2626),
                                           onPressed: () =>
-                                              _deleteLead(lead['id'] as String),
+                                              _deleteLead(lead.id ?? ''),
                                           padding: EdgeInsets.zero,
                                           constraints: const BoxConstraints(
                                             minWidth: 32,

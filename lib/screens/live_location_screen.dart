@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../core/app_logger.dart';
+import '../core/app_snackbar.dart';
 import 'dashboard_screen.dart';
 
 class LiveLocationScreen extends StatefulWidget {
@@ -63,7 +65,9 @@ class _LiveLocationScreenState extends State<LiveLocationScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Location permission denied. Live location cannot be shown.'),
+          content: Text(
+            'Location permission denied. Live location cannot be shown.',
+          ),
         ),
       );
       return;
@@ -73,13 +77,16 @@ class _LiveLocationScreenState extends State<LiveLocationScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Location permission permanently denied. Enable it from Settings to see live location.'),
+          content: Text(
+            'Location permission permanently denied. Enable it from Settings to see live location.',
+          ),
         ),
       );
       return;
     }
 
-    final allowed = permission == LocationPermission.always ||
+    final allowed =
+        permission == LocationPermission.always ||
         permission == LocationPermission.whileInUse;
     if (!allowed) return;
 
@@ -90,28 +97,53 @@ class _LiveLocationScreenState extends State<LiveLocationScreen> {
       });
       if (_mapCtrl != null) {
         _mapCtrl!.animateCamera(
-          CameraUpdate.newLatLng(
-            LatLng(first.latitude, first.longitude),
-          ),
+          CameraUpdate.newLatLng(LatLng(first.latitude, first.longitude)),
         );
       }
-    } catch (_) {}
+    } catch (e, st) {
+      AppLogger.error(
+        'Failed to get initial live location',
+        error: e,
+        stackTrace: st,
+        name: 'LiveLocation',
+      );
+      if (mounted) {
+        AppSnackbar.showError(context, 'Unable to get your current location.');
+      }
+    }
 
     _positionSub?.cancel();
-    _positionSub = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5,
-      ),
-    ).listen((pos) {
-      final latLng = LatLng(pos.latitude, pos.longitude);
-      setState(() {
-        _current = latLng;
-      });
-      if (_mapCtrl != null) {
-        _mapCtrl!.animateCamera(CameraUpdate.newLatLng(latLng));
-      }
-    });
+    _positionSub =
+        Geolocator.getPositionStream(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            distanceFilter: 5,
+          ),
+        ).listen(
+          (pos) {
+            final latLng = LatLng(pos.latitude, pos.longitude);
+            setState(() {
+              _current = latLng;
+            });
+            if (_mapCtrl != null) {
+              _mapCtrl!.animateCamera(CameraUpdate.newLatLng(latLng));
+            }
+          },
+          onError: (Object error, StackTrace stack) {
+            AppLogger.error(
+              'Live location stream error',
+              error: error,
+              stackTrace: stack,
+              name: 'LiveLocation',
+            );
+            if (mounted) {
+              AppSnackbar.showError(
+                context,
+                'Location updates interrupted. Please check permissions.',
+              );
+            }
+          },
+        );
   }
 
   @override

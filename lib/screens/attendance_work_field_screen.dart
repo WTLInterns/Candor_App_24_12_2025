@@ -7,6 +7,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+import '../core/app_error.dart';
+import '../core/app_snackbar.dart';
 import '../providers/session_provider.dart';
 import '../services/api_client.dart';
 
@@ -224,14 +226,13 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
         longitude: _longitude,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Work From Field attendance submitted')),
-      );
+      AppSnackbar.showSuccess(context, 'Work From Field attendance submitted');
+    } on AppError catch (e) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, e.message);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to submit attendance')),
-      );
+      AppSnackbar.showError(context, 'Failed to submit attendance');
     } finally {
       if (mounted) {
         setState(() {
@@ -275,14 +276,13 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
         longitude: _longitude,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Punch In successful (Present)')),
-      );
+      AppSnackbar.showSuccess(context, 'Punch In successful (Present)');
+    } on AppError catch (e) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, e.message);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to punch in')));
+      AppSnackbar.showError(context, 'Failed to punch in');
     } finally {
       if (mounted) {
         setState(() {
@@ -387,14 +387,13 @@ class _AttendanceWorkFieldScreenState extends State<AttendanceWorkFieldScreen> {
         reason: null,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Punch Out successful')));
+      AppSnackbar.showSuccess(context, 'Punch Out successful');
+    } on AppError catch (e) {
+      if (!mounted) return;
+      AppSnackbar.showError(context, e.message);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to punch out')));
+      AppSnackbar.showError(context, 'Failed to punch out');
     } finally {
       if (mounted) {
         setState(() {

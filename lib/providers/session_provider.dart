@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../models/session.dart';
 import '../services/session_service.dart';
 
 class SessionProvider extends ChangeNotifier {
@@ -20,6 +21,14 @@ class SessionProvider extends ChangeNotifier {
   String? get phone => _phone;
   bool get isLoggedIn => _agentId != null;
   bool get loading => _loading;
+
+  Session get session => Session(
+    agentId: _agentId,
+    agentName: _agentName,
+    employeeCode: _employeeCode,
+    email: _email,
+    phone: _phone,
+  );
 
   Future<void> load() async {
     _agentId = await _sessionService.getAgentId();
